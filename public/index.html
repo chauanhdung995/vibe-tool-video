@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Pipeline Studio</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <!-- DARK SIDEBAR -->
+      <aside class="sidebar">
+
+        <!-- Main script / topic input -->
+        <div class="sidebar-top">
+          <textarea id="inputText" rows="7"
+            placeholder="Nhập chủ đề để video hoặc dán JSON kịch bản vào đây. Nếu nội dung là JSON hợp lệ, hệ thống sẽ tự bỏ qua bước AI tạo script."></textarea>
+          <p class="hint-text">Hệ thống tự nhận diện: văn bản thường = chủ đề video, <a href="#" id="show-json-sample" class="hint-link">JSON hợp lệ</a> = kịch bản thủ công.</p>
+        </div>
+
+        <!-- Project creation form -->
+        <form id="project-form" class="sidebar-form">
+          <!-- Hidden file inputs triggered by buttons -->
+          <input id="logoFile" type="file" accept="image/*" style="display:none" />
+          <input id="backgroundMusic" type="file" accept="audio/*" multiple style="display:none" />
+
+          <div class="sidebar-section">
+            <div class="section-label">ẢNH THAM CHIẾU <span class="section-opt">(URL)</span></div>
+            <input id="referenceImageUrl" type="url" class="dark-input" placeholder="Dán link ảnh tham chiếu nhân vật..." />
+          </div>
+
+          <div class="sidebar-section">
+            <div class="section-label">NHỊP VIDEO</div>
+            <div class="grid-2">
+              <div>
+                <div class="sub-label">Độ dài video</div>
+                <select id="videoDurationSec" class="dark-select">
+                  <option value="30">30 giây</option>
+                  <option value="60" selected>1 phút</option>
+                  <option value="120">2 phút</option>
+                  <option value="180">3 phút</option>
+                </select>
+              </div>
+              <div>
+                <div class="sub-label">Độ dài 1 cảnh</div>
+                <select id="sceneDurationSec" class="dark-select">
+                  <option value="5">5 giây</option>
+                  <option value="10" selected>10 giây</option>
+                  <option value="15">15 giây</option>
+                  <option value="20">20 giây</option>
+                </select>
+              </div>
+            </div>
+            <div class="estimate-text" id="estimate-text">Ước tính 6 cảnh, khoảng 10 s/cảnh.</div>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="section-label">TỐC ĐỘ GIỌNG ĐỌC</div>
+            <select id="voiceSpeed" class="dark-select">
+              <option value="0.7">0.7× — Rất chậm</option>
+              <option value="0.8">0.8× — Chậm</option>
+              <option value="0.9">0.9× — Hơi chậm</option>
+              <option value="1.0" selected>1.0× — Bình thường</option>
+              <option value="1.1">1.1× — Hơi nhanh</option>
+              <option value="1.2">1.2× — Nhanh</option>
+            </select>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="section-label">PHONG CÁCH ẢNH</div>
+            <select id="imageStyle" class="dark-select"></select>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="section-label">CHUYỂN ĐỘNG CẢNH</div>
+            <select id="motionPreset" class="dark-select"></select>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="section-label">PHỤ ĐỀ <span class="section-dim">(burn-in)</span></div>
+            <label class="toggle-row">
+              <input id="subtitleEnabled" type="checkbox" class="toggle-input" />
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              <span class="toggle-text">Bật phụ đề</span>
+            </label>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="section-label">NHẠC NỀN</div>
+            <div class="logo-row">
+              <span class="logo-name" id="music-display">Chưa có nhạc nền</span>
+              <button type="button" class="btn-ghost-xs" id="btn-change-music">Chọn file</button>
+            </div>
+            <div class="volume-row">
+              <span class="sub-label">Âm lượng: <span id="music-volume-label">18%</span></span>
+              <input id="musicVolume" type="range" min="0" max="1" step="0.01" value="0.18" class="volume-slider" />
+            </div>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="section-label">LOGO</div>
+            <div class="logo-row">
+              <span class="logo-name" id="logo-display">Chưa có logo</span>
+              <button type="button" class="btn-ghost-xs" id="btn-change-logo">Đổi logo</button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-start">🚀 Bắt đầu</button>
+        </form>
+
+        <!-- Advanced settings (collapsible) -->
+        <details class="sidebar-collapse">
+          <summary class="collapse-summary">⚙ Cài đặt nâng cao</summary>
+          <div id="settings-form" class="collapse-body">
+            <div class="sidebar-section">
+              <div class="section-label">CHATO1 API KEYS <span class="section-opt">(.txt)</span></div>
+              <input id="chato1FileInput" type="file" accept=".txt" style="display:none" />
+              <div class="logo-row">
+                <span class="logo-name" id="chato1-file-display">Chưa tải file</span>
+                <button type="button" class="btn-ghost-xs" id="btn-upload-chato1">Tải file</button>
+              </div>
+            </div>
+            <div class="sidebar-section">
+              <div class="section-label">LUCYLAB API KEY</div>
+              <input id="vivibeApiKey" type="password" class="dark-input" />
+            </div>
+            <div class="sidebar-section">
+              <div class="section-label">VOICE ID</div>
+              <input id="vivibeVoiceId" type="text" class="dark-input" />
+            </div>
+          </div>
+        </details>
+
+        <!-- History -->
+        <div class="sidebar-history">
+          <div class="history-header">
+            <span class="section-label">LỊCH SỬ DỰ ÁN</span>
+            <button id="delete-all" type="button" class="btn-danger-xs">Xoá tất</button>
+          </div>
+          <div id="history-list" class="history-list"></div>
+        </div>
+
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <main class="content">
+
+        <!-- Project header -->
+        <div class="project-header">
+          <div class="project-header-info">
+            <h1 id="project-title">Chưa chọn dự án</h1>
+          </div>
+          <div class="project-header-actions">
+            <button id="render-all-project" type="button" class="btn-secondary">Render lại</button>
+            <button id="resume-project" type="button" class="btn-secondary">Resume</button>
+            <button id="refresh-project" type="button" class="btn-secondary">Refresh</button>
+          </div>
+        </div>
+
+        <!-- Status bar -->
+        <div class="status-bar">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text" class="status-text">Chưa chọn dự án</span>
+        </div>
+
+        <!-- Scene grid (scenes + thumbnail card) -->
+        <div id="scene-list" class="scene-grid"></div>
+        <!-- YouTube panel (video + SEO) -->
+        <div id="final-output"></div>
+
+      </main>
+    </div>
+
+    <!-- JSON sample modal -->
+    <div id="json-modal" class="modal-overlay">
+      <div class="modal-dialog modal-dialog--narrow">
+        <div class="modal-header">
+          <h2 class="modal-heading">Cấu trúc JSON kịch bản</h2>
+          <button id="json-modal-close" class="modal-close-btn" type="button">✕</button>
+        </div>
+        <div class="json-modal-body">
+          <p class="json-modal-desc">Dán JSON có cấu trúc sau vào ô nhập. Hệ thống sẽ bỏ qua bước AI và dùng trực tiếp kịch bản này.</p>
+          <pre class="json-sample"><code>{
+  "title": "Tiêu đề video của bạn",
+  "thumbnailPrompt": "Mô tả ảnh thumbnail bằng tiếng Anh",
+  "scenes": [
+    {
+      "sceneNumber": 1,
+      "voiceText": "Lời thoại / thuyết minh cho cảnh này.",
+      "imagePrompt": "Describe the scene image in English, cinematic style",
+      "useReferenceImage": false
+    },
+    {
+      "sceneNumber": 2,
+      "voiceText": "Dùng ảnh tham chiếu chung đã cấu hình.",
+      "imagePrompt": "Second scene description in English",
+      "useReferenceImage": true
+    },
+    {
+      "sceneNumber": 3,
+      "voiceText": "Dùng URL ảnh tham chiếu riêng cho cảnh này.",
+      "imagePrompt": "Third scene description in English",
+      "useReferenceImage": "https://example.com/character.jpg"
+    }
+  ]
+}</code></pre>
+          <div class="json-modal-notes">
+            <p><strong>title</strong> — Tiêu đề hiển thị cho dự án.</p>
+            <p><strong>thumbnailPrompt</strong> — Mô tả ảnh thumbnail (tiếng Anh, dùng khi tạo thumbnail).</p>
+            <p><strong>voiceText</strong> — Văn bản đọc thành giọng nói cho cảnh đó.</p>
+            <p><strong>imagePrompt</strong> — Mô tả ảnh nền của cảnh (tiếng Anh, càng chi tiết càng tốt).</p>
+            <p><strong>useReferenceImage</strong> — <code>false</code>: không dùng ảnh tham chiếu · <code>true</code>: dùng ảnh tham chiếu chung (URL ở mục "ẢNH THAM CHIẾU") · <code>"https://..."</code>: dùng URL ảnh cụ thể cho riêng cảnh này.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scene edit modal -->
+    <div id="scene-modal" class="modal-overlay">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h2 id="modal-title" class="modal-heading">Cảnh</h2>
+          <button id="modal-close" class="modal-close-btn" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-col-media" id="modal-media"></div>
+          <div class="modal-col-fields" id="modal-fields"></div>
+        </div>
+        <div class="modal-footer" id="modal-footer"></div>
+      </div>
+    </div>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
