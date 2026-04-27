@@ -51,9 +51,11 @@ function buildScriptPrompt({ inputText, settings }) {
     '   - false → khi nhân vật còn nhỏ tuổi / già hơn ảnh tham chiếu, hoặc cảnh thuần phong cảnh / ký hiệu.',
     '',
     '⑥ SHOT TYPE: Ưu tiên medium shot hoặc wide-medium shot. Tránh extreme close-up, tránh chữ / watermark / border / collage / split layout.',
+    '',
+    '⑦ VĂN BẢN TRONG ẢNH: Nếu cảnh có biển hiệu, bảng, poster, chữ viết, tiêu đề, v.v., BẮT BUỘC thêm cụm "all visible text and writing in Vietnamese language only" vào imagePrompt.',
     ...(bgModifier ? [
       '',
-      `⑦ NỀN ĐẶC BIỆT (bắt buộc cho phong cách này): Thêm NGUYÊN VĂN cụm sau vào mỗi imagePrompt: "${bgModifier}"`,
+      `⑧ NỀN ĐẶC BIỆT (bắt buộc cho phong cách này): Thêm NGUYÊN VĂN cụm sau vào mỗi imagePrompt: "${bgModifier}"`,
     ] : []),
     '',
     '════ JSON TRẢ VỀ ════',

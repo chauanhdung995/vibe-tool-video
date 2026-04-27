@@ -34,11 +34,14 @@ async function downloadFile(url, outputPath) {
   throw lastError;
 }
 
+const VIETNAMESE_TEXT_CUE = 'all visible text, signs, labels, writing in the image must be in Vietnamese language only, not English';
+
 // Enrich bất kỳ imagePrompt nào với framing 16:9, style detail và bg modifier.
 // Áp dụng cho cả JSON input lẫn prompt AI-generated để đảm bảo nhất quán.
 function buildEnrichedImagePrompt(basePrompt, imageStyle) {
   const parts = [basePrompt.trim()];
   parts.push(STYLE_FRAMING_CUE);
+  parts.push(VIETNAMESE_TEXT_CUE);
   const bgMod = STYLE_BG_MODIFIERS[imageStyle];
   if (bgMod) parts.push(bgMod);
   const styleDetail = STYLE_PROMPT_DETAIL[imageStyle];
