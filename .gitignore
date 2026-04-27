@@ -1,0 +1,7 @@
+node_modules/
+projects/
+storage/
+tmp/
+*.tmp
+.DS_Store
+Thumbs.db
