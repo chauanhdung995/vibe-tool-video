@@ -13,9 +13,14 @@ function deriveTitle(title, scenes = []) {
   return fallback ? fallback.slice(0, 80) : '';
 }
 
+// Calibration: 40-45 Vietnamese words (no punctuation) ≈ 10 s at voiceSpeed 0.9
+// → base rate at 1.0× = 42.5 / (10 × 0.9) ≈ 4.72 words/sec
+const WORDS_PER_SEC_AT_1X = 42.5 / (10 * 0.9);
+
 function buildScriptPrompt({ inputText, settings }) {
   const sceneCount = Math.max(1, Math.round(settings.videoDurationSec / settings.sceneDurationSec));
-  const voiceWordCount = Math.max(20, Math.round(settings.sceneDurationSec * 2.6));
+  const voiceSpeed = settings.voiceSpeed ?? 1.0;
+  const voiceWordCount = Math.max(20, Math.round(settings.sceneDurationSec * WORDS_PER_SEC_AT_1X * voiceSpeed));
   const styleDetail = STYLE_PROMPT_DETAIL[settings.imageStyle] || settings.imageStyle;
   const bgModifier  = STYLE_BG_MODIFIERS[settings.imageStyle] || null;
 
@@ -62,7 +67,7 @@ function buildScriptPrompt({ inputText, settings }) {
 
 async function generateScriptFromText(chat01Client, payload) {
   const prompt = buildScriptPrompt(payload);
-  const script = await chat01Client.generateJson(prompt);
+  const script = await chat01Client.generateJson(prompt, 'gpt-5-5-thinking');
   const scenes = normalizeScenes(script.scenes || []);
   return {
     title: deriveTitle(script.title, scenes),
