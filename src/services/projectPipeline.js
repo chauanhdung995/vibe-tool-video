@@ -104,7 +104,8 @@ function createSemaphore(limit) {
 async function processAllScenesPipelined(project, appSettings) {
   const paths = getProjectPaths(project.id);
   const imageSem = createSemaphore(project.settings.imageConcurrency);
-  const voiceSem = createSemaphore(1); // most TTS APIs (Vivibe, Genmax, Vbee) reject concurrent exports
+  const voiceConcurrency = (appSettings.ttsProvider === 'vivibe' || !appSettings.ttsProvider) ? 1 : 3;
+  const voiceSem = createSemaphore(voiceConcurrency);
   const renderSem = createSemaphore(Math.min(4, project.scenes.length));
   const chat01Client = createAiClient(appSettings);
 
