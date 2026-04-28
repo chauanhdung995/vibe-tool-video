@@ -129,6 +129,8 @@ async function getChromeExecutablePath() {
 }
 
 function buildSceneHtml({ imageDataUrl, width, height, motionPreset, duration }) {
+  // bg overflow: 12% mỗi phía → che được pan/sway tối đa ~12% width mà không lộ nền đen
+  const bgOverflow = 12;
   return `<!doctype html>
 <html>
   <head>
@@ -146,27 +148,28 @@ function buildSceneHtml({ imageDataUrl, width, height, motionPreset, duration })
         width: ${width}px;
         height: ${height}px;
         overflow: hidden;
-        background: #050505;
       }
-      .bg, .fg {
+      /* bg: tĩnh, blur mạnh, rộng hơn frame 12% mỗi phía → luôn che overflow của fg */
+      .bg {
         position: absolute;
-        left: 50%;
-        top: 0;
+        left: -${bgOverflow}%;
+        top: -${bgOverflow}%;
+        width: ${100 + bgOverflow * 2}%;
+        height: ${100 + bgOverflow * 2}%;
         object-fit: cover;
-        object-position: center top;
-        transform-origin: center top;
-        will-change: transform;
+        object-position: center center;
+        filter: blur(52px) brightness(0.52) saturate(0.8);
       }
+      /* fg: full-frame, transform-origin center — scale 1.0 = ảnh vừa khít, không cắt */
       .fg {
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
-      }
-      .bg {
-        top: -4%;
-        width: 124%;
-        height: 124%;
-        filter: blur(34px) brightness(0.62) saturate(0.95);
-        opacity: 0.92;
+        object-fit: cover;
+        object-position: center center;
+        transform-origin: center center;
+        will-change: transform;
       }
       .vignette {
         position: absolute;
@@ -180,28 +183,27 @@ function buildSceneHtml({ imageDataUrl, width, height, motionPreset, duration })
   </head>
   <body>
     <div class="stage">
-      <img class="bg" id="bg" src="${imageDataUrl}" />
+      <img class="bg" src="${imageDataUrl}" />
       <img class="fg" id="fg" src="${imageDataUrl}" />
       <div class="vignette"></div>
     </div>
     <script>
-      const bg = document.getElementById('bg');
       const fg = document.getElementById('fg');
       const width = ${width};
       const height = ${height};
       const preset = ${JSON.stringify(motionPreset)};
 
-      // Số giây mỗi chu kỳ hiệu ứng — tốc độ cố định bất kể cảnh dài hay ngắn
-      const CYCLE_SEC = 5;
+      // 1 chu kỳ mỗi 8s → tốc độ cố định bất kể cảnh dài hay ngắn
+      const CYCLE_SEC = 8;
       const sceneDuration = ${JSON.stringify(duration)};
-      // Làm tròn → số chu kỳ nguyên → p=0 và p=1 cùng trạng thái, không giật khi lặp
+      // Số nguyên → p=0 và p=1 đồng trạng thái, lặp không giật
       const n = Math.max(1, Math.round(sceneDuration / CYCLE_SEC));
 
       function stateAt(progress) {
         const p = Math.max(0, Math.min(1, progress));
-        const baseX = width * 0.04; // 4% of width
+        // Pan tối đa 6% width — bg overflow 12% luôn che đủ
+        const panX = width * 0.06;
 
-        // pulse: 0→1→0 lặp n lần. osc: 0→1→0→-1→0 lặp n lần.
         function pulse() { return (1 - Math.cos(p * Math.PI * 2 * n)) / 2; }
         function osc()   { return Math.sin(p * Math.PI * 2 * n); }
 
@@ -209,56 +211,44 @@ function buildSceneHtml({ imageDataUrl, width, height, motionPreset, duration })
           case 'none':
             return { scale: 1.0, x: 0, y: 0, rotate: 0 };
 
-          case 'zoom-out':
-            return { scale: 1.07 - 0.04 * pulse(), x: 0, y: 0, rotate: 0 };
-
-          case 'pan-left': {
-            const s = 1.0 + (2 * baseX / width) * 1.01;
-            return { scale: s, x: baseX * osc(), y: 0, rotate: 0 };
-          }
-
-          case 'pan-right': {
-            const s = 1.0 + (2 * baseX / width) * 1.01;
-            return { scale: s, x: -baseX * osc(), y: 0, rotate: 0 };
-          }
-
-          case 'sway': {
-            const swayDeg = 1.2;
-            const swayRad = swayDeg * Math.PI / 180;
-            const swayScale = (Math.cos(swayRad) + (width / height) * Math.sin(swayRad)) * 1.02;
-            const currentRotateDeg = swayDeg * osc();
-            const descentY = (width / 2) * Math.sin(Math.abs(currentRotateDeg) * Math.PI / 180);
-            return { scale: swayScale, x: 0, y: -descentY, rotate: currentRotateDeg };
-          }
-
-          case 'zoom-pan-left': {
-            const zpMaxX = baseX * 0.6;
-            const zpDelta = (2 * zpMaxX / width) * 1.02;
-            return { scale: 1.03 + zpDelta * pulse(), x: -zpMaxX * osc(), y: 0, rotate: 0 };
-          }
-
-          case 'zoom-pan-right': {
-            const zpMaxX = baseX * 0.6;
-            const zpDelta = (2 * zpMaxX / width) * 1.02;
-            return { scale: 1.03 + zpDelta * pulse(), x: zpMaxX * osc(), y: 0, rotate: 0 };
-          }
-
-          case 'pan-sway': {
-            const maxPan = baseX * 0.5;
-            const s = 1.0 + (2 * maxPan / width) * 1.01;
-            return { scale: s, x: -maxPan * osc(), y: 0, rotate: 0 };
-          }
-
+          // Zoom: fg scale 1.0→1.04→1.0, bg che phần overflow nhỏ ở cạnh
           case 'zoom-in':
           default:
-            return { scale: 1.03 + 0.04 * pulse(), x: 0, y: 0, rotate: 0 };
+            return { scale: 1.0 + 0.04 * pulse(), x: 0, y: 0, rotate: 0 };
+
+          case 'zoom-out':
+            return { scale: 1.04 - 0.04 * pulse(), x: 0, y: 0, rotate: 0 };
+
+          // Pan: fg giữ scale=1.0, bg tĩnh che gap hoàn toàn
+          case 'pan-left':
+            return { scale: 1.0, x: panX * osc(), y: 0, rotate: 0 };
+
+          case 'pan-right':
+            return { scale: 1.0, x: -panX * osc(), y: 0, rotate: 0 };
+
+          // Sway: rotation quanh tâm, bg che góc bị lộ
+          case 'sway':
+            return { scale: 1.0, x: 0, y: 0, rotate: 1.5 * osc() };
+
+          // Zoom + Pan kết hợp nhẹ
+          case 'zoom-pan-left':
+            return { scale: 1.0 + 0.03 * pulse(), x: -panX * 0.7 * osc(), y: 0, rotate: 0 };
+
+          case 'zoom-pan-right':
+            return { scale: 1.0 + 0.03 * pulse(), x: panX * 0.7 * osc(), y: 0, rotate: 0 };
+
+          case 'pan-sway':
+            return { scale: 1.0, x: -panX * 0.6 * osc(), y: 0, rotate: 0 };
+
+          case 'zoom-alternate':
+            return { scale: 1.0 + 0.04 * pulse(), x: 0, y: 0, rotate: 0 };
         }
       }
 
       window.__renderFrame = (progress) => {
         const s = stateAt(progress);
-        fg.style.transform = 'translate3d(calc(-50% + ' + s.x + 'px),' + s.y + 'px,0) scale(' + s.scale + ') rotate(' + s.rotate + 'deg)';
-        bg.style.transform = 'translate3d(calc(-50% + ' + (-s.x * 0.28) + 'px),' + Math.max(-18, -s.y * 0.08) + 'px,0) scale(' + (1.2 + (s.scale - 1) * 0.22) + ')';
+        fg.style.transform =
+          'translate(' + s.x + 'px,' + s.y + 'px) scale(' + s.scale + ') rotate(' + s.rotate + 'deg)';
       };
 
       Promise.all(Array.from(document.images).map((img) => {
