@@ -104,6 +104,7 @@ function createSemaphore(limit) {
 async function processAllScenesPipelined(project, appSettings) {
   const paths = getProjectPaths(project.id);
   const imageSem = createSemaphore(project.settings.imageConcurrency);
+  const voiceSem = createSemaphore(1); // most TTS APIs (Vivibe, Genmax, Vbee) reject concurrent exports
   const renderSem = createSemaphore(Math.min(4, project.scenes.length));
   const chat01Client = createAiClient(appSettings);
 
@@ -147,15 +148,20 @@ async function processAllScenesPipelined(project, appSettings) {
       scene.durations.voiceSec = await getAudioDuration(paddedPath, appSettings.ffprobePath);
       await appendProjectLog(paths.projectDir, 'info', `Voice already exists, skipping scene ${scene.sceneNumber}`, { durationSec: scene.durations.voiceSec });
     } else {
-      await appendProjectLog(paths.projectDir, 'info', `Generating voice for scene ${scene.sceneNumber}`);
-      const result = await createSceneVoice({ scene, settings: appSettings, sceneDir });
-      const finalPath = await addAudioTailPadding(result.voicePath, paddedPath, project.settings.voicePaddingMs, appSettings.ffmpegPath);
-      scene.files.voice = finalPath;
-      scene.files.autoSrt = result.rawSrtPath;
-      scene.metadata.projectExportId = result.projectExportId;
-      scene.durations.voiceSec = await getAudioDuration(finalPath, appSettings.ffprobePath);
-      await appendProjectLog(paths.projectDir, 'info', `Voice done: scene ${scene.sceneNumber}`, { durationSec: scene.durations.voiceSec });
-      await saveProject(project);
+      await voiceSem.acquire();
+      try {
+        await appendProjectLog(paths.projectDir, 'info', `Generating voice for scene ${scene.sceneNumber}`);
+        const result = await createSceneVoice({ scene, settings: appSettings, sceneDir });
+        const finalPath = await addAudioTailPadding(result.voicePath, paddedPath, project.settings.voicePaddingMs, appSettings.ffmpegPath);
+        scene.files.voice = finalPath;
+        scene.files.autoSrt = result.rawSrtPath;
+        scene.metadata.projectExportId = result.projectExportId;
+        scene.durations.voiceSec = await getAudioDuration(finalPath, appSettings.ffprobePath);
+        await appendProjectLog(paths.projectDir, 'info', `Voice done: scene ${scene.sceneNumber}`, { durationSec: scene.durations.voiceSec });
+        await saveProject(project);
+      } finally {
+        voiceSem.release();
+      }
     }
 
     // Subtitle
