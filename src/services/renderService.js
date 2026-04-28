@@ -128,7 +128,7 @@ async function getChromeExecutablePath() {
   throw new Error('Chrome executable not found. Set CHROME_PATH or install Google Chrome.');
 }
 
-function buildSceneHtml({ imageDataUrl, width, height, motionPreset }) {
+function buildSceneHtml({ imageDataUrl, width, height, motionPreset, duration }) {
   return `<!doctype html>
 <html>
   <head>
@@ -191,39 +191,42 @@ function buildSceneHtml({ imageDataUrl, width, height, motionPreset }) {
       const height = ${height};
       const preset = ${JSON.stringify(motionPreset)};
 
+      // Số giây mỗi chu kỳ hiệu ứng — tốc độ cố định bất kể cảnh dài hay ngắn
+      const CYCLE_SEC = 5;
+      const sceneDuration = ${JSON.stringify(duration)};
+      // Làm tròn → số chu kỳ nguyên → p=0 và p=1 cùng trạng thái, không giật khi lặp
+      const n = Math.max(1, Math.round(sceneDuration / CYCLE_SEC));
+
       function stateAt(progress) {
         const p = Math.max(0, Math.min(1, progress));
-        // Pan amplitude: 4% of width (was 6.5%) → ít mất nội dung hơn
-        const baseX = width * 0.04;
+        const baseX = width * 0.04; // 4% of width
 
-        // pulse(n): 0→1→0 per n cycles (cosine). osc(n): 0→1→0→-1→0 per n cycles (sine).
-        // Dùng n=1 (1 chu kỳ/cảnh, chậm mượt) thay vì n=2 cũ.
-        function pulse(n) { return (1 - Math.cos(p * Math.PI * 2 * n)) / 2; }
-        function osc(n)   { return Math.sin(p * Math.PI * 2 * n); }
+        // pulse: 0→1→0 lặp n lần. osc: 0→1→0→-1→0 lặp n lần.
+        function pulse() { return (1 - Math.cos(p * Math.PI * 2 * n)) / 2; }
+        function osc()   { return Math.sin(p * Math.PI * 2 * n); }
 
         switch (preset) {
           case 'none':
             return { scale: 1.0, x: 0, y: 0, rotate: 0 };
 
           case 'zoom-out':
-            // 1.07 → 1.03 → 1.07 (biên độ 4%, 1 chu kỳ)
-            return { scale: 1.07 - 0.04 * pulse(1), x: 0, y: 0, rotate: 0 };
+            return { scale: 1.07 - 0.04 * pulse(), x: 0, y: 0, rotate: 0 };
 
           case 'pan-left': {
-            const panLScale = 1.0 + (2 * baseX / width) * 1.01;
-            return { scale: panLScale, x: baseX * osc(1), y: 0, rotate: 0 };
+            const s = 1.0 + (2 * baseX / width) * 1.01;
+            return { scale: s, x: baseX * osc(), y: 0, rotate: 0 };
           }
 
           case 'pan-right': {
-            const panRScale = 1.0 + (2 * baseX / width) * 1.01;
-            return { scale: panRScale, x: -baseX * osc(1), y: 0, rotate: 0 };
+            const s = 1.0 + (2 * baseX / width) * 1.01;
+            return { scale: s, x: -baseX * osc(), y: 0, rotate: 0 };
           }
 
           case 'sway': {
-            const swayDeg = 1.2; // giảm từ 2.0° → 1.2° cho tinh tế hơn
+            const swayDeg = 1.2;
             const swayRad = swayDeg * Math.PI / 180;
             const swayScale = (Math.cos(swayRad) + (width / height) * Math.sin(swayRad)) * 1.02;
-            const currentRotateDeg = swayDeg * osc(1);
+            const currentRotateDeg = swayDeg * osc();
             const descentY = (width / 2) * Math.sin(Math.abs(currentRotateDeg) * Math.PI / 180);
             return { scale: swayScale, x: 0, y: -descentY, rotate: currentRotateDeg };
           }
@@ -231,25 +234,24 @@ function buildSceneHtml({ imageDataUrl, width, height, motionPreset }) {
           case 'zoom-pan-left': {
             const zpMaxX = baseX * 0.6;
             const zpDelta = (2 * zpMaxX / width) * 1.02;
-            return { scale: 1.03 + zpDelta * pulse(1), x: -zpMaxX * osc(1), y: 0, rotate: 0 };
+            return { scale: 1.03 + zpDelta * pulse(), x: -zpMaxX * osc(), y: 0, rotate: 0 };
           }
 
           case 'zoom-pan-right': {
             const zpMaxX = baseX * 0.6;
             const zpDelta = (2 * zpMaxX / width) * 1.02;
-            return { scale: 1.03 + zpDelta * pulse(1), x: zpMaxX * osc(1), y: 0, rotate: 0 };
+            return { scale: 1.03 + zpDelta * pulse(), x: zpMaxX * osc(), y: 0, rotate: 0 };
           }
 
           case 'pan-sway': {
             const maxPan = baseX * 0.5;
-            const panSwayScale = 1.0 + (2 * maxPan / width) * 1.01;
-            return { scale: panSwayScale, x: -maxPan * osc(1), y: 0, rotate: 0 };
+            const s = 1.0 + (2 * maxPan / width) * 1.01;
+            return { scale: s, x: -maxPan * osc(), y: 0, rotate: 0 };
           }
 
           case 'zoom-in':
           default:
-            // 1.03 → 1.07 → 1.03 (biên độ 4%, 1 chu kỳ)
-            return { scale: 1.03 + 0.04 * pulse(1), x: 0, y: 0, rotate: 0 };
+            return { scale: 1.03 + 0.04 * pulse(), x: 0, y: 0, rotate: 0 };
         }
       }
 
@@ -289,7 +291,7 @@ async function renderFramesWithBrowser({ imagePath, framesDir, duration, motionP
   try {
     const page = await browser.newPage();
     await page.setViewport({ width, height, deviceScaleFactor: 1 });
-    await page.setContent(buildSceneHtml({ imageDataUrl, width, height, motionPreset }), {
+    await page.setContent(buildSceneHtml({ imageDataUrl, width, height, motionPreset, duration }), {
       waitUntil: 'load'
     });
     await page.waitForFunction(() => window.__rendererReady === true, { timeout: 15000 });
