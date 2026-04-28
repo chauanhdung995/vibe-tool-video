@@ -210,6 +210,41 @@ function createApiRouter() {
     }
   });
 
+  router.post(
+    '/projects/:projectId/scenes/:sceneNumber/upload-image',
+    upload.single('image'),
+    async (req, res, next) => {
+      try {
+        if (!req.file) {
+          res.status(400).json({ error: 'No image file provided' });
+          return;
+        }
+        const { projectId, sceneNumber } = req.params;
+        const project = await getProject(projectId);
+        if (!project) {
+          if (req.file?.path) await fs.unlink(req.file.path).catch(() => {});
+          res.status(404).json({ error: 'Project not found' });
+          return;
+        }
+        const scene = project.scenes.find((s) => Number(s.sceneNumber) === Number(sceneNumber));
+        if (!scene) {
+          if (req.file?.path) await fs.unlink(req.file.path).catch(() => {});
+          res.status(404).json({ error: 'Scene not found' });
+          return;
+        }
+        const sceneDir = await ensureSceneDir(projectId, sceneNumber);
+        const imagePath = path.join(sceneDir, 'image.png');
+        await fs.rename(req.file.path, imagePath);
+        scene.files.image = imagePath;
+        await saveProject(project);
+        res.json({ ok: true });
+      } catch (error) {
+        if (req.file?.path) await fs.unlink(req.file.path).catch(() => {});
+        next(error);
+      }
+    }
+  );
+
   router.post('/projects/:projectId/scenes/:sceneNumber/actions/:action', async (req, res, next) => {
     try {
       const { projectId, sceneNumber, action } = req.params;

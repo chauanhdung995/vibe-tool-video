@@ -52,7 +52,9 @@ function buildScriptPrompt({ inputText, settings }) {
     '',
     '⑥ SHOT TYPE: Ưu tiên medium shot hoặc wide-medium shot. Tránh extreme close-up, tránh chữ / watermark / border / collage / split layout.',
     '',
-    '⑦ VĂN BẢN TRONG ẢNH: Nếu cảnh có biển hiệu, bảng, poster, chữ viết, tiêu đề, v.v., BẮT BUỘC thêm cụm "all visible text and writing in Vietnamese language only" vào imagePrompt.',
+    '⑦ VĂN BẢN TRONG ẢNH — Mặc định KHÔNG có chữ trong ảnh. BẮT BUỘC thêm "no captions, no speech bubbles, no narration boxes, no text overlays, no watermarks, no titles" vào MỌI imagePrompt.',
+    '   Chỉ khi cảnh THỰC SỰ cần chữ để minh hoạ bối cảnh (biển tên đường, bảng hiệu cửa hàng, trang báo/sách nhân vật đang đọc) mới cho phép chữ trong ảnh, và khi đó thêm thêm "all visible text and writing in Vietnamese language only".',
+    '   TUYỆT ĐỐI không tạo chữ chú thích, tiêu đề cảnh, hay chữ trang trí không liên quan đến bối cảnh thực của cảnh đó.',
     ...(bgModifier ? [
       '',
       `⑧ NỀN ĐẶC BIỆT (bắt buộc cho phong cách này): Thêm NGUYÊN VĂN cụm sau vào mỗi imagePrompt: "${bgModifier}"`,
@@ -69,7 +71,7 @@ function buildScriptPrompt({ inputText, settings }) {
 
 async function generateScriptFromText(chat01Client, payload) {
   const prompt = buildScriptPrompt(payload);
-  const script = await chat01Client.generateJson(prompt, 'gpt-5-5-thinking');
+  const script = await chat01Client.generateJson(prompt);
   const scenes = normalizeScenes(script.scenes || []);
   return {
     title: deriveTitle(script.title, scenes),

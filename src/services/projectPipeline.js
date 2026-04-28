@@ -3,7 +3,14 @@ const path = require('path');
 const { appendProjectLog } = require('../lib/logger');
 const { exists, writeJson } = require('../lib/fs');
 const { Chat01Client } = require('./chat01Client');
-const { VivibeClient } = require('./vivibeClient');
+const { OpenAIClient } = require('./openaiClient');
+
+function createAiClient(settings) {
+  if (settings.apiProvider === 'openai') {
+    return new OpenAIClient(settings);
+  }
+  return new Chat01Client(settings);
+}
 const { generateScriptFromText, parseScriptInput } = require('./scriptGenerator');
 const {
   createProject,
@@ -43,7 +50,7 @@ async function ensureScript(project, appSettings) {
     return project;
   }
 
-  const chat01Client = new Chat01Client(appSettings);
+  const chat01Client = createAiClient(appSettings);
   const script = await generateScriptFromText(chat01Client, {
     inputText: parsed.text,
     settings: project.settings
@@ -77,9 +84,135 @@ async function runWithConcurrency(items, limit, worker) {
   await Promise.all(runners);
 }
 
+function createSemaphore(limit) {
+  let count = 0;
+  const queue = [];
+  return {
+    acquire() {
+      return new Promise(resolve => {
+        if (count < limit) { count++; resolve(); }
+        else { queue.push(resolve); }
+      });
+    },
+    release() {
+      if (queue.length > 0) { queue.shift()(); }
+      else { count--; }
+    }
+  };
+}
+
+async function processAllScenesPipelined(project, appSettings) {
+  const paths = getProjectPaths(project.id);
+  const imageSem = createSemaphore(project.settings.imageConcurrency);
+  const renderSem = createSemaphore(Math.min(4, project.scenes.length));
+  const chat01Client = createAiClient(appSettings);
+
+  await appendProjectLog(paths.projectDir, 'info', `Processing scenes (pipelined)`, {
+    total: project.scenes.length,
+    imageConcurrency: project.settings.imageConcurrency,
+    renderConcurrency: Math.min(4, project.scenes.length)
+  });
+
+  await Promise.all(project.scenes.map(async (scene) => {
+    const sceneDir = await ensureSceneDir(project.id, scene.sceneNumber);
+
+    // Image
+    const imagePath = path.join(sceneDir, 'image.png');
+    if (await exists(imagePath)) {
+      scene.files.image = imagePath;
+      await appendProjectLog(paths.projectDir, 'info', `Image already exists, skipping scene ${scene.sceneNumber}`);
+    } else {
+      await imageSem.acquire();
+      try {
+        await appendProjectLog(paths.projectDir, 'info', `Generating image for scene ${scene.sceneNumber}`, { prompt: scene.imagePrompt?.slice(0, 80) });
+        const result = await generateSceneImage({ chat01Client, project, scene, settings: appSettings, sceneDir });
+        scene.files.image = result.outputPath;
+        scene.metadata.imageUrl = result.imageUrl;
+        await appendProjectLog(paths.projectDir, 'info', `Image done: scene ${scene.sceneNumber}`);
+        await saveProject(project);
+      } catch (err) {
+        scene.status = 'error';
+        scene.errors = [...(scene.errors || []), `image: ${err.message}`];
+        await appendProjectLog(paths.projectDir, 'error', `Image failed: scene ${scene.sceneNumber} — ${err.message}`);
+        return;
+      } finally {
+        imageSem.release();
+      }
+    }
+
+    // Voice
+    const paddedPath = path.join(sceneDir, 'voice.padded.wav');
+    if (await exists(paddedPath)) {
+      scene.files.voice = paddedPath;
+      scene.durations.voiceSec = await getAudioDuration(paddedPath, appSettings.ffprobePath);
+      await appendProjectLog(paths.projectDir, 'info', `Voice already exists, skipping scene ${scene.sceneNumber}`, { durationSec: scene.durations.voiceSec });
+    } else {
+      await appendProjectLog(paths.projectDir, 'info', `Generating voice for scene ${scene.sceneNumber}`);
+      const result = await createSceneVoice({ scene, settings: appSettings, sceneDir });
+      const finalPath = await addAudioTailPadding(result.voicePath, paddedPath, project.settings.voicePaddingMs, appSettings.ffmpegPath);
+      scene.files.voice = finalPath;
+      scene.files.autoSrt = result.rawSrtPath;
+      scene.metadata.projectExportId = result.projectExportId;
+      scene.durations.voiceSec = await getAudioDuration(finalPath, appSettings.ffprobePath);
+      await appendProjectLog(paths.projectDir, 'info', `Voice done: scene ${scene.sceneNumber}`, { durationSec: scene.durations.voiceSec });
+      await saveProject(project);
+    }
+
+    // Subtitle
+    if (project.settings.subtitleEnabled) {
+      const subtitlePath = path.join(sceneDir, 'voice.corrected.srt');
+      if (await exists(subtitlePath)) {
+        scene.files.subtitle = subtitlePath;
+        await appendProjectLog(paths.projectDir, 'info', `Subtitle already exists, skipping scene ${scene.sceneNumber}`);
+      } else {
+        await appendProjectLog(paths.projectDir, 'info', `Generating subtitle for scene ${scene.sceneNumber}`);
+        const subtitleFiles = await createCorrectedSubtitle({ scene, sceneDir, settings: appSettings });
+        scene.files.subtitle = subtitleFiles.srtPath;
+        scene.files.karaokeAss = subtitleFiles.assPath;
+        await appendProjectLog(paths.projectDir, 'info', `Subtitle done: scene ${scene.sceneNumber}`);
+        await saveProject(project);
+      }
+    }
+
+    // Render
+    const videoPath = path.join(sceneDir, project.settings.subtitleEnabled ? 'scene.subtitled.mp4' : 'scene.voice.mp4');
+    if (await exists(videoPath)) {
+      scene.files.video = videoPath;
+      await appendProjectLog(paths.projectDir, 'info', `Scene video already exists, skipping scene ${scene.sceneNumber}`);
+      return;
+    }
+    await renderSem.acquire();
+    try {
+      await appendProjectLog(paths.projectDir, 'info', `Rendering scene video ${scene.sceneNumber}`, { durationSec: scene.durations.voiceSec, aspectRatio: project.settings.aspectRatio });
+      scene.files.video = await renderSceneVideo({
+        ffmpegPath: appSettings.ffmpegPath,
+        imagePath: scene.files.image,
+        audioPath: scene.files.voice,
+        outputPath: videoPath,
+        duration: scene.durations.voiceSec,
+        aspectRatio: project.settings.aspectRatio,
+        subtitlePath: project.settings.subtitleEnabled ? scene.files.karaokeAss || scene.files.subtitle : null,
+        motionMode: project.settings.motionPreset,
+        sceneNumber: scene.sceneNumber,
+        projectId: project.id,
+        imageStyle: project.settings.imageStyle
+      });
+      await appendProjectLog(paths.projectDir, 'info', `Scene video done: scene ${scene.sceneNumber}`);
+      await saveProject(project);
+    } finally {
+      renderSem.release();
+    }
+  }));
+
+  const failed = project.scenes.filter((s) => s.status === 'error' && !s.files.image);
+  if (failed.length === project.scenes.length) {
+    throw new Error(`All ${failed.length} image generations failed. Check API keys and quota.`);
+  }
+}
+
 async function generateImages(project, appSettings) {
   const paths = getProjectPaths(project.id);
-  const chat01Client = new Chat01Client(appSettings);
+  const chat01Client = createAiClient(appSettings);
   await appendProjectLog(paths.projectDir, 'info', `Generating images`, { total: project.scenes.length, concurrency: project.settings.imageConcurrency });
   await runWithConcurrency(project.scenes, project.settings.imageConcurrency, async (scene) => {
     const sceneDir = await ensureSceneDir(project.id, scene.sceneNumber);
@@ -113,7 +246,7 @@ async function generateImages(project, appSettings) {
 async function generateImageForScene(project, appSettings, sceneNumber, force = false) {
   const scene = getSceneOrThrow(project, sceneNumber);
   const paths = getProjectPaths(project.id);
-  const chat01Client = new Chat01Client(appSettings);
+  const chat01Client = createAiClient(appSettings);
   const sceneDir = await ensureSceneDir(project.id, scene.sceneNumber);
   const imagePath = path.join(sceneDir, 'image.png');
   if (!force && (await exists(imagePath))) {
@@ -130,7 +263,6 @@ async function generateImageForScene(project, appSettings, sceneNumber, force = 
 
 async function generateVoices(project, appSettings) {
   const paths = getProjectPaths(project.id);
-  const vivibeClient = new VivibeClient(appSettings);
   await appendProjectLog(paths.projectDir, 'info', `Generating voices`, { total: project.scenes.length });
   for (const scene of project.scenes) {
     const sceneDir = await ensureSceneDir(project.id, scene.sceneNumber);
@@ -142,7 +274,7 @@ async function generateVoices(project, appSettings) {
       continue;
     }
     await appendProjectLog(paths.projectDir, 'info', `Generating voice for scene ${scene.sceneNumber}`);
-    const result = await createSceneVoice({ vivibeClient, scene, settings: appSettings, sceneDir });
+    const result = await createSceneVoice({ scene, settings: appSettings, sceneDir });
     const finalPath = await addAudioTailPadding(
       result.voicePath,
       paddedPath,
@@ -168,9 +300,8 @@ async function generateVoiceForScene(project, appSettings, sceneNumber, force = 
     scene.durations.voiceSec = await getAudioDuration(paddedPath, appSettings.ffprobePath);
     return scene;
   }
-  const vivibeClient = new VivibeClient(appSettings);
   await appendProjectLog(paths.projectDir, 'info', `Generating voice for scene ${scene.sceneNumber}`);
-  const result = await createSceneVoice({ vivibeClient, scene, settings: appSettings, sceneDir });
+  const result = await createSceneVoice({ scene, settings: appSettings, sceneDir });
   const finalPath = await addAudioTailPadding(
     result.voicePath,
     paddedPath,
@@ -300,7 +431,7 @@ async function generateThumbnailForProject(project, appSettings, force = false) 
     return thumbnailPath;
   }
   await appendProjectLog(paths.projectDir, 'info', `Generating thumbnail`, { prompt: project.thumbnailPrompt?.slice(0, 80) });
-  const chat01Client = new Chat01Client(appSettings);
+  const chat01Client = createAiClient(appSettings);
   await generateThumbnailImage({
     chat01Client,
     project,
@@ -316,7 +447,7 @@ async function generateThumbnailForProject(project, appSettings, force = false) 
 async function generateSeoForProject(project, appSettings) {
   const paths = getProjectPaths(project.id);
   await appendProjectLog(paths.projectDir, 'info', `Generating SEO metadata`);
-  const chat01Client = new Chat01Client(appSettings);
+  const chat01Client = createAiClient(appSettings);
   project.seo = await generateSeo(chat01Client, project);
   await writeJson(paths.seoFile, project.seo);
   await saveProject(project);
@@ -399,16 +530,7 @@ async function runProjectPipeline(projectId) {
     await ensureScript(project, appSettings);
     await markStep(project, 'running', 'script-ready');
 
-    await generateImages(project, appSettings);
-    await markStep(project, 'running', 'images-ready');
-
-    await generateVoices(project, appSettings);
-    await markStep(project, 'running', 'voices-ready');
-
-    await generateSubtitles(project, appSettings);
-    await markStep(project, 'running', 'subtitles-ready');
-
-    await renderScenes(project, appSettings);
+    await processAllScenesPipelined(project, appSettings);
     await markStep(project, 'running', 'scenes-rendered');
 
     await finalizeProject(project, appSettings);

@@ -49,6 +49,17 @@ function buildEnrichedImagePrompt(basePrompt, imageStyle) {
   return parts.join(', ');
 }
 
+async function generateImageWithClient(aiClient, prompt, refUrl, outputPath) {
+  if (typeof aiClient.generateImageBuffer === 'function') {
+    const buffer = await aiClient.generateImageBuffer(prompt, refUrl);
+    await fs.writeFile(outputPath, buffer);
+    return null;
+  }
+  const imageUrl = await aiClient.generateImage(prompt, refUrl);
+  await downloadFile(imageUrl, outputPath);
+  return imageUrl;
+}
+
 async function generateSceneImage({ chat01Client, project, scene, settings, sceneDir }) {
   const outputPath = path.join(sceneDir, 'image.png');
   const enrichedPrompt = buildEnrichedImagePrompt(scene.imagePrompt, project.settings?.imageStyle);
@@ -60,8 +71,7 @@ async function generateSceneImage({ chat01Client, project, scene, settings, scen
   } else if (scene.useReferenceImage === true) {
     refUrl = settings.referenceImageUrl;
   }
-  const imageUrl = await chat01Client.generateImage(enrichedPrompt, refUrl);
-  await downloadFile(imageUrl, outputPath);
+  const imageUrl = await generateImageWithClient(chat01Client, enrichedPrompt, refUrl, outputPath);
   return { imageUrl, outputPath };
 }
 
@@ -69,8 +79,7 @@ async function generateThumbnailImage({ chat01Client, project, settings, outputP
   const basePrompt = project.thumbnailPrompt
     || `Create a clean 16:9 YouTube thumbnail for: ${project.title}`;
   const enrichedPrompt = buildEnrichedImagePrompt(basePrompt, project.settings?.imageStyle);
-  const imageUrl = await chat01Client.generateImage(enrichedPrompt, settings.referenceImageUrl);
-  await downloadFile(imageUrl, outputPath);
+  const imageUrl = await generateImageWithClient(chat01Client, enrichedPrompt, settings.referenceImageUrl || '', outputPath);
   return { imageUrl, outputPath };
 }
 

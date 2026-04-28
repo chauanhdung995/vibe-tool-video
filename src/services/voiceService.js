@@ -3,11 +3,14 @@ const path = require('path');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
 const { downloadFile } = require('./imageService');
+const { VivibeClient } = require('./vivibeClient');
+const { GenmaxClient } = require('./genmaxClient');
+const { VbeeClient } = require('./vbeeClient');
 
 const execFileAsync = promisify(execFile);
 const { consoleLog } = require('../lib/logger');
 
-async function pollVoice(vivibeClient, projectExportId, waitMs = 4000, maxAttempts = 120) {
+async function pollVivibe(vivibeClient, projectExportId, waitMs = 4000, maxAttempts = 120) {
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const result = await vivibeClient.getExportStatus(projectExportId);
     if (result.state === 'completed') {
@@ -24,9 +27,25 @@ async function pollVoice(vivibeClient, projectExportId, waitMs = 4000, maxAttemp
   throw new Error(`Vivibe polling timeout: ${projectExportId}`);
 }
 
-async function createSceneVoice({ vivibeClient, scene, settings, sceneDir }) {
+async function createSceneVoice({ scene, settings, sceneDir }) {
+  const provider = settings.ttsProvider || 'vivibe';
+
+  if (provider === 'genmax') {
+    const client = new GenmaxClient(settings);
+    const { voicePath, rawSrtPath } = await client.synthesize(scene.voiceText, sceneDir);
+    return { projectExportId: null, voicePath, rawSrtPath };
+  }
+
+  if (provider === 'vbee') {
+    const client = new VbeeClient(settings);
+    const { voicePath, rawSrtPath } = await client.synthesize(scene.voiceText, sceneDir);
+    return { projectExportId: null, voicePath, rawSrtPath };
+  }
+
+  // Default: vivibe / lucylab
+  const vivibeClient = new VivibeClient(settings);
   const job = await vivibeClient.createVoice(scene.voiceText, settings.vivibeVoiceId, settings.voiceSpeed);
-  const done = await pollVoice(vivibeClient, job.projectExportId);
+  const done = await pollVivibe(vivibeClient, job.projectExportId);
   const voicePath = path.join(sceneDir, 'voice.wav');
   await downloadFile(done.url, voicePath);
 

@@ -20,7 +20,8 @@ const STYLE_OPTIONS = [
   { value: 'anime', label: 'Anime / Manga' },
   { value: 'oil-classical', label: 'Oil Painting Classical' },
   { value: 'cyberpunk', label: 'Cyberpunk / Neon Sci-Fi' },
-  { value: 'comic-popart', label: 'Comic Book / Pop Art' }
+  { value: 'comic-popart', label: 'Comic Book / Pop Art' },
+  { value: 'vintage-graphic-novel', label: 'Vintage Journalistic Graphic Novel' }
 ];
 
 const MOTION_OPTIONS = [
@@ -52,9 +53,25 @@ const DEFAULT_PROJECT_SETTINGS = {
 const FASTER_WHISPER_COMMAND = 'python3 -m faster_whisper';
 
 const DEFAULT_APP_SETTINGS = {
+  apiProvider: 'chat01',
+  // Chat01.ai
   chato1KeysText: '',
+  // OpenAI
+  openaiKeysText: '',
+  ttsProvider: 'vivibe',
+  // Vivibe / LucyLab
   vivibeApiKey: '',
   vivibeVoiceId: '',
+  // Genmax.io
+  genmaxApiKey: '',
+  genmaxVoiceId: '',
+  genmaxSubProvider: 'elevenlabs',
+  genmaxModelId: '',
+  genmaxLanguageCode: 'vi',
+  // Vbee
+  vbeeToken: '',
+  vbeeAppId: '',
+  vbeeVoiceCode: '',
   aspectRatio: '16:9',
   imageStyle: 'cinematic',
   motionPreset: 'zoom-alternate',
@@ -80,7 +97,8 @@ const STYLE_PROMPT_DETAIL = {
   'anime':           'anime digital illustration, studio-quality art, vibrant colors, clean expressive line art, manga-influenced, detailed backgrounds, professional anime production',
   'oil-classical':   'classical oil painting, Old Masters style, rich impasto texture, warm golden light, museum-quality fine art realism',
   'cyberpunk':       'cyberpunk digital art, neon lights, rain-slicked streets, high contrast, glowing blues and magentas, futuristic dystopian city, Blade Runner aesthetic',
-  'comic-popart':    'comic book pop art style, bold black outlines, Ben-Day dots, bright flat colors, dynamic diagonal composition, retro American comics'
+  'comic-popart':    'comic book pop art style, bold black outlines, Ben-Day dots, bright flat colors, dynamic diagonal composition, retro American comics, no speech bubbles, no caption boxes, no text overlays',
+  'vintage-graphic-novel': 'vintage journalistic graphic novel illustration, aged sepia-toned paper texture, bold expressive black ink line art with crosshatching and stippling, reportage documentary style, dramatic chiaroscuro ink shadows, warm amber-sepia wash over black ink, 1940s–1960s editorial illustration aesthetic, no speech bubbles, no caption boxes, no panel borders, no text overlays, no watermarks, single full-frame illustration, museum-quality graphic reportage'
 };
 
 // Modifier đặc biệt cho các style có yêu cầu nền cụ thể — nhúng bổ sung vào prompt

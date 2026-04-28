@@ -8,6 +8,7 @@ const state = {
   currentLogs: [],
   processingSceneNum: null,   // scene đang chạy job, để hiện badge
   chato1KeysText: '',
+  openaiKeysText: '',
   sceneVersions: {},          // sceneNumber → stable ?v= timestamp khi image lần đầu xuất hiện
   thumbnailVersion: null      // stable ?v= timestamp cho thumbnail
 };
@@ -39,9 +40,21 @@ async function request(url, options = {}) {
   return data;
 }
 
+function applyApiProviderVisibility(provider) {
+  ['chat01', 'openai'].forEach((p) => {
+    const el = document.getElementById(`api-${p}`);
+    if (el) el.style.display = p === provider ? '' : 'none';
+  });
+}
+
 function fillSettings(settings) {
   state.settings = settings;
   state.chato1KeysText = settings.chato1KeysText || '';
+  state.openaiKeysText = settings.openaiKeysText || '';
+
+  // API provider
+  document.getElementById('apiProvider').value = settings.apiProvider || 'chat01';
+  applyApiProviderVisibility(settings.apiProvider || 'chat01');
 
   // Restore chato1 key count display
   const chato1Display = document.getElementById('chato1-file-display');
@@ -49,9 +62,24 @@ function fillSettings(settings) {
     const count = state.chato1KeysText.split('\n').filter(Boolean).length;
     chato1Display.textContent = count ? `${count} key đã lưu` : 'Chưa tải file';
   }
-
+  // Restore OpenAI key count display
+  const openaiDisplay = document.getElementById('openai-file-display');
+  if (openaiDisplay) {
+    const count = state.openaiKeysText.split('\n').filter(Boolean).length;
+    openaiDisplay.textContent = count ? `${count} key đã lưu` : 'Chưa tải file';
+  }
+  document.getElementById('ttsProvider').value = settings.ttsProvider || 'vivibe';
+  applyTtsProviderVisibility(settings.ttsProvider || 'vivibe');
   document.getElementById('vivibeApiKey').value = settings.vivibeApiKey || '';
   document.getElementById('vivibeVoiceId').value = settings.vivibeVoiceId || '';
+  document.getElementById('genmaxApiKey').value = settings.genmaxApiKey || '';
+  document.getElementById('genmaxVoiceId').value = settings.genmaxVoiceId || '';
+  document.getElementById('genmaxSubProvider').value = settings.genmaxSubProvider || 'elevenlabs';
+  document.getElementById('genmaxModelId').value = settings.genmaxModelId || '';
+  document.getElementById('genmaxLanguageCode').value = settings.genmaxLanguageCode || 'vi';
+  document.getElementById('vbeeToken').value = settings.vbeeToken || '';
+  document.getElementById('vbeeAppId').value = settings.vbeeAppId || '';
+  document.getElementById('vbeeVoiceCode').value = settings.vbeeVoiceCode || '';
   document.getElementById('referenceImageUrl').value = settings.referenceImageUrl || '';
   document.getElementById('subtitleEnabled').checked = Boolean(settings.subtitleEnabled);
   document.getElementById('imageStyle').value = settings.imageStyle || 'cinematic';
@@ -426,14 +454,32 @@ function updateMusicVolumeLabel(value) {
   if (label) label.textContent = `${Math.round(Number(value) * 100)}%`;
 }
 
+function applyTtsProviderVisibility(provider) {
+  ['vivibe', 'genmax', 'vbee'].forEach((p) => {
+    const el = document.getElementById(`tts-${p}`);
+    if (el) el.style.display = p === provider ? '' : 'none';
+  });
+}
+
 async function autoSaveSettings() {
   await request('/api/settings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      apiProvider: document.getElementById('apiProvider').value,
       chato1KeysText: state.chato1KeysText,
+      openaiKeysText: state.openaiKeysText,
+      ttsProvider: document.getElementById('ttsProvider').value,
       vivibeApiKey: document.getElementById('vivibeApiKey').value,
       vivibeVoiceId: document.getElementById('vivibeVoiceId').value,
+      genmaxApiKey: document.getElementById('genmaxApiKey').value,
+      genmaxVoiceId: document.getElementById('genmaxVoiceId').value,
+      genmaxSubProvider: document.getElementById('genmaxSubProvider').value,
+      genmaxModelId: document.getElementById('genmaxModelId').value,
+      genmaxLanguageCode: document.getElementById('genmaxLanguageCode').value,
+      vbeeToken: document.getElementById('vbeeToken').value,
+      vbeeAppId: document.getElementById('vbeeAppId').value,
+      vbeeVoiceCode: document.getElementById('vbeeVoiceCode').value,
       referenceImageUrl: document.getElementById('referenceImageUrl').value,
       imageStyle: document.getElementById('imageStyle').value,
       motionPreset: document.getElementById('motionPreset').value,
@@ -459,8 +505,40 @@ document.getElementById('chato1FileInput')?.addEventListener('change', async (e)
   await autoSaveSettings();
 });
 
+// API provider toggle
+document.getElementById('apiProvider')?.addEventListener('change', (e) => {
+  applyApiProviderVisibility(e.target.value);
+  autoSaveSettings();
+});
+
+// OpenAI keys: load from .txt file
+document.getElementById('btn-upload-openai')?.addEventListener('click', () => {
+  document.getElementById('openaiKeysFileInput').click();
+});
+
+document.getElementById('openaiKeysFileInput')?.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  state.openaiKeysText = await file.text();
+  const count = state.openaiKeysText.split('\n').filter(Boolean).length;
+  const display = document.getElementById('openai-file-display');
+  if (display) display.textContent = `${file.name} · ${count} key`;
+  await autoSaveSettings();
+});
+
+// TTS provider toggle
+document.getElementById('ttsProvider')?.addEventListener('change', (e) => {
+  applyTtsProviderVisibility(e.target.value);
+  autoSaveSettings();
+});
+
 // Auto-save on change for text/password fields
-['vivibeApiKey', 'vivibeVoiceId', 'referenceImageUrl', 'imageStyle', 'motionPreset', 'subtitleEnabled', 'voiceSpeed', 'musicVolume'].forEach((id) => {
+[
+  'vivibeApiKey', 'vivibeVoiceId',
+  'genmaxApiKey', 'genmaxVoiceId', 'genmaxSubProvider', 'genmaxModelId', 'genmaxLanguageCode',
+  'vbeeToken', 'vbeeAppId', 'vbeeVoiceCode',
+  'referenceImageUrl', 'imageStyle', 'motionPreset', 'subtitleEnabled', 'voiceSpeed', 'musicVolume'
+].forEach((id) => {
   document.getElementById(id)?.addEventListener('change', autoSaveSettings);
 });
 
@@ -616,11 +694,12 @@ function openSceneModal(scene) {
 
   const n = scene.sceneNumber;
   footerEl.innerHTML = `
-    <button type="button" class="btn-secondary" data-modal-action="save"     data-scene-number="${n}">Lưu</button>
-    <button type="button" class="btn-secondary" data-modal-action="image"    data-scene-number="${n}">Tạo ảnh</button>
-    <button type="button" class="btn-secondary" data-modal-action="voice"    data-scene-number="${n}">Tạo voice</button>
-    <button type="button" class="btn-secondary" data-modal-action="subtitle" data-scene-number="${n}">Tạo SRT</button>
-    <button type="button" class="btn-secondary" data-modal-action="render"   data-scene-number="${n}">Render lại</button>
+    <button type="button" class="btn-secondary" data-modal-action="save"         data-scene-number="${n}">Lưu</button>
+    <button type="button" class="btn-secondary" data-modal-action="upload-image" data-scene-number="${n}">Tải ảnh lên</button>
+    <button type="button" class="btn-secondary" data-modal-action="image"        data-scene-number="${n}">Tạo ảnh</button>
+    <button type="button" class="btn-secondary" data-modal-action="voice"        data-scene-number="${n}">Tạo voice</button>
+    <button type="button" class="btn-secondary" data-modal-action="subtitle"     data-scene-number="${n}">Tạo SRT</button>
+    <button type="button" class="btn-secondary" data-modal-action="render"       data-scene-number="${n}">Render lại</button>
   `;
 
   modal.classList.add('open');
@@ -659,6 +738,38 @@ document.getElementById('modal-footer')?.addEventListener('click', async (event)
     setStatus(`Đã lưu cảnh ${sceneNumber}`, 'done');
     closeSceneModal();
     await loadProject(state.currentProjectId);
+    return;
+  }
+
+  if (action === 'upload-image') {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.onchange = async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const allBtns = document.querySelectorAll('#modal-footer button');
+      allBtns.forEach((b) => { b.disabled = true; });
+      setStatus(`Đang tải ảnh lên cảnh ${sceneNumber}...`);
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        await request(
+          `/api/projects/${state.currentProjectId}/scenes/${sceneNumber}/upload-image`,
+          { method: 'POST', body: formData }
+        );
+        await loadProject(state.currentProjectId);
+        const updatedScene = state.currentProject?.scenes?.find(
+          (s) => Number(s.sceneNumber) === Number(sceneNumber)
+        );
+        if (updatedScene) openSceneModal(updatedScene);
+        setStatus(`Đã cập nhật ảnh cảnh ${sceneNumber}`, 'done');
+      } catch (err) {
+        setStatus(`Lỗi: ${err.message}`, 'error');
+        allBtns.forEach((b) => { b.disabled = false; });
+      }
+    };
+    fileInput.click();
     return;
   }
 

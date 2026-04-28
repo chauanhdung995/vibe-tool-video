@@ -153,7 +153,7 @@ class Chat01Client {
     throw lastError || new Error('Chat01 request failed after retrying with multiple keys');
   }
 
-  async generateJson(prompt, model = 'gpt-5-3') {
+  async generateJson(prompt, model = 'gpt-5-5-thinking') {
     const content = await this.request({
       model,
       messages: [{ role: 'user', content: prompt }],

@@ -113,20 +113,93 @@
           <summary class="collapse-summary">⚙ Cài đặt nâng cao</summary>
           <div id="settings-form" class="collapse-body">
             <div class="sidebar-section">
-              <div class="section-label">CHATO1 API KEYS <span class="section-opt">(.txt)</span></div>
-              <input id="chato1FileInput" type="file" accept=".txt" style="display:none" />
-              <div class="logo-row">
-                <span class="logo-name" id="chato1-file-display">Chưa tải file</span>
-                <button type="button" class="btn-ghost-xs" id="btn-upload-chato1">Tải file</button>
+              <div class="section-label">API PROVIDER (ẢNH + VĂN BẢN)</div>
+              <select id="apiProvider" class="dark-input">
+                <option value="chat01">Chat01.ai</option>
+                <option value="openai">OpenAI (gpt-image-2 / gpt-5.5)</option>
+              </select>
+            </div>
+            <!-- Chat01 keys -->
+            <div id="api-chat01" class="api-provider-section">
+              <div class="sidebar-section">
+                <div class="section-label">CHATO1 API KEYS <span class="section-opt">(.txt)</span></div>
+                <input id="chato1FileInput" type="file" accept=".txt" style="display:none" />
+                <div class="logo-row">
+                  <span class="logo-name" id="chato1-file-display">Chưa tải file</span>
+                  <button type="button" class="btn-ghost-xs" id="btn-upload-chato1">Tải file</button>
+                </div>
+              </div>
+            </div>
+            <!-- OpenAI keys -->
+            <div id="api-openai" class="api-provider-section" style="display:none">
+              <div class="sidebar-section">
+                <div class="section-label">OPENAI API KEYS <span class="section-opt">(.txt)</span></div>
+                <input id="openaiKeysFileInput" type="file" accept=".txt" style="display:none" />
+                <div class="logo-row">
+                  <span class="logo-name" id="openai-file-display">Chưa tải file</span>
+                  <button type="button" class="btn-ghost-xs" id="btn-upload-openai">Tải file</button>
+                </div>
               </div>
             </div>
             <div class="sidebar-section">
-              <div class="section-label">LUCYLAB API KEY</div>
-              <input id="vivibeApiKey" type="password" class="dark-input" />
+              <div class="section-label">GIỌNG ĐỌC (TTS PROVIDER)</div>
+              <select id="ttsProvider" class="dark-input">
+                <option value="vivibe">LucyLab / Vivibe</option>
+                <option value="genmax">Genmax.io (ElevenLabs / MiniMax)</option>
+                <option value="vbee">Vbee (Tiếng Việt)</option>
+              </select>
             </div>
-            <div class="sidebar-section">
-              <div class="section-label">VOICE ID</div>
-              <input id="vivibeVoiceId" type="text" class="dark-input" />
+            <!-- Vivibe -->
+            <div id="tts-vivibe" class="tts-provider-section">
+              <div class="sidebar-section">
+                <div class="section-label">LUCYLAB API KEY</div>
+                <input id="vivibeApiKey" type="password" class="dark-input" />
+              </div>
+              <div class="sidebar-section">
+                <div class="section-label">LUCYLAB VOICE ID</div>
+                <input id="vivibeVoiceId" type="text" class="dark-input" />
+              </div>
+            </div>
+            <!-- Genmax -->
+            <div id="tts-genmax" class="tts-provider-section" style="display:none">
+              <div class="sidebar-section">
+                <div class="section-label">GENMAX API KEY</div>
+                <input id="genmaxApiKey" type="password" class="dark-input" />
+              </div>
+              <div class="sidebar-section">
+                <div class="section-label">GENMAX VOICE ID</div>
+                <input id="genmaxVoiceId" type="text" class="dark-input" placeholder="e.g. Bella hoặc numeric ID" />
+              </div>
+              <div class="sidebar-section">
+                <div class="section-label">SUB-PROVIDER</div>
+                <select id="genmaxSubProvider" class="dark-input">
+                  <option value="elevenlabs">ElevenLabs</option>
+                  <option value="minimax">MiniMax</option>
+                </select>
+              </div>
+              <div class="sidebar-section">
+                <div class="section-label">MODEL ID <span class="section-opt">(để trống = mặc định)</span></div>
+                <input id="genmaxModelId" type="text" class="dark-input" placeholder="e.g. eleven_multilingual_v2" />
+              </div>
+              <div class="sidebar-section">
+                <div class="section-label">LANGUAGE CODE</div>
+                <input id="genmaxLanguageCode" type="text" class="dark-input" placeholder="vi" value="vi" />
+              </div>
+            </div>
+            <!-- Vbee -->
+            <div id="tts-vbee" class="tts-provider-section" style="display:none">
+              <div class="sidebar-section">
+                <div class="section-label">VBEE TOKEN</div>
+                <input id="vbeeToken" type="password" class="dark-input" />
+              </div>
+              <div class="sidebar-section">
+                <div class="section-label">VBEE APP ID</div>
+                <input id="vbeeAppId" type="text" class="dark-input" />
+              </div>
+              <div class="sidebar-section">
+                <div class="section-label">VBEE VOICE CODE</div>
+                <input id="vbeeVoiceCode" type="text" class="dark-input" placeholder="e.g. hn_female_ngochuyen_full_48k-fhg" />
+              </div>
             </div>
           </div>
         </details>
