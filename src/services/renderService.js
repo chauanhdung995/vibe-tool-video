@@ -43,6 +43,8 @@ function hashString(input) {
 
 function resolveSceneMotionPreset(mode, sceneNumber, projectId = '') {
   switch (mode) {
+    case 'none':
+      return 'none';
     case 'zoom-in':
       return 'zoom-in';
     case 'zoom-out':
@@ -191,60 +193,63 @@ function buildSceneHtml({ imageDataUrl, width, height, motionPreset }) {
 
       function stateAt(progress) {
         const p = Math.max(0, Math.min(1, progress));
-        const baseX = width * 0.065;
+        // Pan amplitude: 4% of width (was 6.5%) → ít mất nội dung hơn
+        const baseX = width * 0.04;
 
-        // Seamless periodic helpers — value at p=0 equals value at p=1, no loop stutter
-        // pulse(n): 0→1→0 repeating n full cycles (cosine-based)
+        // pulse(n): 0→1→0 per n cycles (cosine). osc(n): 0→1→0→-1→0 per n cycles (sine).
+        // Dùng n=1 (1 chu kỳ/cảnh, chậm mượt) thay vì n=2 cũ.
         function pulse(n) { return (1 - Math.cos(p * Math.PI * 2 * n)) / 2; }
-        // osc(n): 0→peak→0→-peak→0 repeating n full cycles (sine-based)
-        function osc(n) { return Math.sin(p * Math.PI * 2 * n); }
+        function osc(n)   { return Math.sin(p * Math.PI * 2 * n); }
 
         switch (preset) {
+          case 'none':
+            return { scale: 1.0, x: 0, y: 0, rotate: 0 };
+
           case 'zoom-out':
-            return { scale: 1.10 - 0.08 * pulse(2), x: 0, y: 0, rotate: 0 };
+            // 1.07 → 1.03 → 1.07 (biên độ 4%, 1 chu kỳ)
+            return { scale: 1.07 - 0.04 * pulse(1), x: 0, y: 0, rotate: 0 };
 
           case 'pan-left': {
-            const panLScale = (1 + 2 * baseX / width) * 1.02;
-            return { scale: panLScale, x: baseX * osc(2), y: 0, rotate: 0 };
+            const panLScale = 1.0 + (2 * baseX / width) * 1.01;
+            return { scale: panLScale, x: baseX * osc(1), y: 0, rotate: 0 };
           }
 
           case 'pan-right': {
-            const panRScale = (1 + 2 * baseX / width) * 1.02;
-            return { scale: panRScale, x: -baseX * osc(2), y: 0, rotate: 0 };
+            const panRScale = 1.0 + (2 * baseX / width) * 1.01;
+            return { scale: panRScale, x: -baseX * osc(1), y: 0, rotate: 0 };
           }
 
           case 'sway': {
-            const swayDeg = 2.0;
+            const swayDeg = 1.2; // giảm từ 2.0° → 1.2° cho tinh tế hơn
             const swayRad = swayDeg * Math.PI / 180;
-            const swayScale = (Math.cos(swayRad) + (width / height) * Math.sin(swayRad)) * 1.04;
-            const currentRotateDeg = swayDeg * osc(2);
-            // When rotating around center-top the far top corner descends by (W/2)*sin(|θ|).
-            // Shift the image up by exactly that amount so the background is never exposed.
+            const swayScale = (Math.cos(swayRad) + (width / height) * Math.sin(swayRad)) * 1.02;
+            const currentRotateDeg = swayDeg * osc(1);
             const descentY = (width / 2) * Math.sin(Math.abs(currentRotateDeg) * Math.PI / 180);
             return { scale: swayScale, x: 0, y: -descentY, rotate: currentRotateDeg };
           }
 
           case 'zoom-pan-left': {
-            const zpMaxX = baseX * 0.55;
-            const zpDelta = (2 * zpMaxX / width) * 1.05;
-            return { scale: 1.0 + zpDelta * pulse(2), x: -zpMaxX * osc(2), y: 0, rotate: 0 };
+            const zpMaxX = baseX * 0.6;
+            const zpDelta = (2 * zpMaxX / width) * 1.02;
+            return { scale: 1.03 + zpDelta * pulse(1), x: -zpMaxX * osc(1), y: 0, rotate: 0 };
           }
 
           case 'zoom-pan-right': {
-            const zpMaxX = baseX * 0.55;
-            const zpDelta = (2 * zpMaxX / width) * 1.05;
-            return { scale: 1.0 + zpDelta * pulse(2), x: zpMaxX * osc(2), y: 0, rotate: 0 };
+            const zpMaxX = baseX * 0.6;
+            const zpDelta = (2 * zpMaxX / width) * 1.02;
+            return { scale: 1.03 + zpDelta * pulse(1), x: zpMaxX * osc(1), y: 0, rotate: 0 };
           }
 
           case 'pan-sway': {
-            const maxPan = baseX * 0.45;
-            const panSwayScale = (1 + (2 * maxPan / width)) * 1.02;
-            return { scale: panSwayScale, x: -maxPan * osc(2), y: 0, rotate: 0 };
+            const maxPan = baseX * 0.5;
+            const panSwayScale = 1.0 + (2 * maxPan / width) * 1.01;
+            return { scale: panSwayScale, x: -maxPan * osc(1), y: 0, rotate: 0 };
           }
 
           case 'zoom-in':
           default:
-            return { scale: 1.02 + 0.08 * pulse(2), x: 0, y: 0, rotate: 0 };
+            // 1.03 → 1.07 → 1.03 (biên độ 4%, 1 chu kỳ)
+            return { scale: 1.03 + 0.04 * pulse(1), x: 0, y: 0, rotate: 0 };
         }
       }
 

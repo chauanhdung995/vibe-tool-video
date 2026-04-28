@@ -25,6 +25,7 @@ const STYLE_OPTIONS = [
 ];
 
 const MOTION_OPTIONS = [
+  { value: 'none', label: 'Không hiệu ứng (tĩnh)' },
   { value: 'zoom-in', label: 'Phóng to dần' },
   { value: 'zoom-out', label: 'Thu nhỏ dần' },
   { value: 'zoom-alternate', label: 'Phóng to + thu nhỏ xen kẽ' },
