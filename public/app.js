@@ -8,7 +8,7 @@ const state = {
   currentLogs: [],
   processingSceneNum: null,   // scene đang chạy job, để hiện badge
   chato1KeysText: '',
-  openaiKeysText: '',
+  voiceSamples: [],
   sceneVersions: {},          // sceneNumber → stable ?v= timestamp khi image lần đầu xuất hiện
   thumbnailVersion: null      // stable ?v= timestamp cho thumbnail
 };
@@ -40,21 +40,9 @@ async function request(url, options = {}) {
   return data;
 }
 
-function applyApiProviderVisibility(provider) {
-  ['chat01', 'openai'].forEach((p) => {
-    const el = document.getElementById(`api-${p}`);
-    if (el) el.style.display = p === provider ? '' : 'none';
-  });
-}
-
 function fillSettings(settings) {
   state.settings = settings;
   state.chato1KeysText = settings.chato1KeysText || '';
-  state.openaiKeysText = settings.openaiKeysText || '';
-
-  // API provider
-  document.getElementById('apiProvider').value = settings.apiProvider || 'chat01';
-  applyApiProviderVisibility(settings.apiProvider || 'chat01');
 
   // Restore chato1 key count display
   const chato1Display = document.getElementById('chato1-file-display');
@@ -62,29 +50,14 @@ function fillSettings(settings) {
     const count = state.chato1KeysText.split('\n').filter(Boolean).length;
     chato1Display.textContent = count ? `${count} key đã lưu` : 'Chưa tải file';
   }
-  // Restore OpenAI key count display
-  const openaiDisplay = document.getElementById('openai-file-display');
-  if (openaiDisplay) {
-    const count = state.openaiKeysText.split('\n').filter(Boolean).length;
-    openaiDisplay.textContent = count ? `${count} key đã lưu` : 'Chưa tải file';
-  }
-  document.getElementById('ttsProvider').value = settings.ttsProvider || 'vivibe';
-  applyTtsProviderVisibility(settings.ttsProvider || 'vivibe');
-  document.getElementById('vivibeApiKey').value = settings.vivibeApiKey || '';
-  document.getElementById('vivibeVoiceId').value = settings.vivibeVoiceId || '';
-  document.getElementById('genmaxApiKey').value = settings.genmaxApiKey || '';
-  document.getElementById('genmaxVoiceId').value = settings.genmaxVoiceId || '';
-  document.getElementById('genmaxSubProvider').value = settings.genmaxSubProvider || 'elevenlabs';
-  document.getElementById('genmaxModelId').value = settings.genmaxModelId || '';
-  document.getElementById('genmaxLanguageCode').value = settings.genmaxLanguageCode || 'vi';
-  document.getElementById('vbeeToken').value = settings.vbeeToken || '';
-  document.getElementById('vbeeAppId').value = settings.vbeeAppId || '';
-  document.getElementById('vbeeVoiceCode').value = settings.vbeeVoiceCode || '';
+  document.getElementById('larvoiceApiKey').value = settings.larvoiceApiKey || '';
+  document.getElementById('larvoiceVoiceId').value = String(settings.larvoiceVoiceId || '1');
+  updateVoicePreview();
   document.getElementById('referenceImageUrl').value = settings.referenceImageUrl || '';
   document.getElementById('subtitleEnabled').checked = Boolean(settings.subtitleEnabled);
   document.getElementById('imageStyle').value = settings.imageStyle || 'cinematic';
   document.getElementById('motionPreset').value = settings.motionPreset || 'zoom-alternate';
-  document.getElementById('voiceSpeed').value = String(settings.voiceSpeed ?? 1.0);
+  document.getElementById('voiceSpeed').value = voiceSpeedSelectValue(settings.voiceSpeed);
   const vol = settings.musicVolume ?? 0.18;
   document.getElementById('musicVolume').value = String(vol);
   updateMusicVolumeLabel(vol);
@@ -102,6 +75,37 @@ function renderMotionOptions(options) {
   select.innerHTML = options
     .map((option) => `<option value="${option.value}">${option.label}</option>`)
     .join('');
+}
+
+function renderLarVoiceOptions(samples) {
+  const select = document.getElementById('larvoiceVoiceId');
+  if (!select) return;
+  const voices = Array.isArray(samples) ? samples : [];
+  select.innerHTML = voices.length
+    ? voices.map((voice) => {
+        const lang = voice.language ? ` · ${voice.language.toUpperCase()}` : '';
+        return `<option value="${voice.id}">${escapeHtml(voice.name)} (#${voice.id}${lang})</option>`;
+      }).join('')
+    : '<option value="1">Anh Quân (#1)</option>';
+}
+
+function getSelectedVoiceSample() {
+  const selectedId = Number(document.getElementById('larvoiceVoiceId')?.value || 1);
+  return state.voiceSamples.find((voice) => Number(voice.id) === selectedId) || null;
+}
+
+function updateVoicePreview() {
+  const audio = document.getElementById('voice-preview-audio');
+  if (!audio) return;
+  const sample = getSelectedVoiceSample();
+  audio.src = sample?.sampleUrl || '';
+}
+
+function voiceSpeedSelectValue(value) {
+  const speed = Number(value);
+  if (speed === 0.9) return '0.9';
+  if (speed === 1.1) return '1.1';
+  return '1.0';
 }
 
 function renderHistory() {
@@ -421,8 +425,10 @@ async function loadBootstrap() {
   state.history = data.history;
   state.styles = data.styles;
   state.motionOptions = data.motionOptions || [];
+  state.voiceSamples = data.voiceSamples || [];
   renderStyleOptions(data.styles);
   renderMotionOptions(state.motionOptions);
+  renderLarVoiceOptions(state.voiceSamples);
   fillSettings(data.settings);
   renderHistory();
 }
@@ -454,32 +460,16 @@ function updateMusicVolumeLabel(value) {
   if (label) label.textContent = `${Math.round(Number(value) * 100)}%`;
 }
 
-function applyTtsProviderVisibility(provider) {
-  ['vivibe', 'genmax', 'vbee'].forEach((p) => {
-    const el = document.getElementById(`tts-${p}`);
-    if (el) el.style.display = p === provider ? '' : 'none';
-  });
-}
-
 async function autoSaveSettings() {
   await request('/api/settings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      apiProvider: document.getElementById('apiProvider').value,
+      apiProvider: 'chat01',
       chato1KeysText: state.chato1KeysText,
-      openaiKeysText: state.openaiKeysText,
-      ttsProvider: document.getElementById('ttsProvider').value,
-      vivibeApiKey: document.getElementById('vivibeApiKey').value,
-      vivibeVoiceId: document.getElementById('vivibeVoiceId').value,
-      genmaxApiKey: document.getElementById('genmaxApiKey').value,
-      genmaxVoiceId: document.getElementById('genmaxVoiceId').value,
-      genmaxSubProvider: document.getElementById('genmaxSubProvider').value,
-      genmaxModelId: document.getElementById('genmaxModelId').value,
-      genmaxLanguageCode: document.getElementById('genmaxLanguageCode').value,
-      vbeeToken: document.getElementById('vbeeToken').value,
-      vbeeAppId: document.getElementById('vbeeAppId').value,
-      vbeeVoiceCode: document.getElementById('vbeeVoiceCode').value,
+      ttsProvider: 'larvoice',
+      larvoiceApiKey: document.getElementById('larvoiceApiKey').value,
+      larvoiceVoiceId: document.getElementById('larvoiceVoiceId').value,
       referenceImageUrl: document.getElementById('referenceImageUrl').value,
       imageStyle: document.getElementById('imageStyle').value,
       motionPreset: document.getElementById('motionPreset').value,
@@ -505,38 +495,19 @@ document.getElementById('chato1FileInput')?.addEventListener('change', async (e)
   await autoSaveSettings();
 });
 
-// API provider toggle
-document.getElementById('apiProvider')?.addEventListener('change', (e) => {
-  applyApiProviderVisibility(e.target.value);
+document.getElementById('larvoiceVoiceId')?.addEventListener('change', () => {
+  updateVoicePreview();
   autoSaveSettings();
 });
 
-// OpenAI keys: load from .txt file
-document.getElementById('btn-upload-openai')?.addEventListener('click', () => {
-  document.getElementById('openaiKeysFileInput').click();
-});
-
-document.getElementById('openaiKeysFileInput')?.addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  state.openaiKeysText = await file.text();
-  const count = state.openaiKeysText.split('\n').filter(Boolean).length;
-  const display = document.getElementById('openai-file-display');
-  if (display) display.textContent = `${file.name} · ${count} key`;
-  await autoSaveSettings();
-});
-
-// TTS provider toggle
-document.getElementById('ttsProvider')?.addEventListener('change', (e) => {
-  applyTtsProviderVisibility(e.target.value);
-  autoSaveSettings();
+document.getElementById('btn-preview-voice')?.addEventListener('click', () => {
+  updateVoicePreview();
+  document.getElementById('voice-preview-audio')?.play().catch(() => {});
 });
 
 // Auto-save on change for text/password fields
 [
-  'vivibeApiKey', 'vivibeVoiceId',
-  'genmaxApiKey', 'genmaxVoiceId', 'genmaxSubProvider', 'genmaxModelId', 'genmaxLanguageCode',
-  'vbeeToken', 'vbeeAppId', 'vbeeVoiceCode',
+  'larvoiceApiKey',
   'referenceImageUrl', 'imageStyle', 'motionPreset', 'subtitleEnabled', 'voiceSpeed', 'musicVolume'
 ].forEach((id) => {
   document.getElementById(id)?.addEventListener('change', autoSaveSettings);

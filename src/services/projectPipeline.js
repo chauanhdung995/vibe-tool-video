@@ -3,13 +3,18 @@ const path = require('path');
 const { appendProjectLog } = require('../lib/logger');
 const { exists, writeJson } = require('../lib/fs');
 const { Chat01Client } = require('./chat01Client');
-const { OpenAIClient } = require('./openaiClient');
+
+const CHAT01_CLIENT_SESSION = Symbol('chat01ClientSession');
 
 function createAiClient(settings) {
-  if (settings.apiProvider === 'openai') {
-    return new OpenAIClient(settings);
+  if (!settings[CHAT01_CLIENT_SESSION]) {
+    Object.defineProperty(settings, CHAT01_CLIENT_SESSION, {
+      value: new Chat01Client(settings),
+      writable: true,
+      enumerable: false
+    });
   }
-  return new Chat01Client(settings);
+  return settings[CHAT01_CLIENT_SESSION];
 }
 const { generateScriptFromText, parseScriptInput } = require('./scriptGenerator');
 const {
@@ -104,7 +109,7 @@ function createSemaphore(limit) {
 async function processAllScenesPipelined(project, appSettings) {
   const paths = getProjectPaths(project.id);
   const imageSem = createSemaphore(project.settings.imageConcurrency);
-  const voiceConcurrency = (appSettings.ttsProvider === 'vivibe' || !appSettings.ttsProvider) ? 1 : 3;
+  const voiceConcurrency = 3;
   const voiceSem = createSemaphore(voiceConcurrency);
   const renderSem = createSemaphore(Math.min(4, project.scenes.length));
   const chat01Client = createAiClient(appSettings);
@@ -176,6 +181,9 @@ async function processAllScenesPipelined(project, appSettings) {
         const subtitleFiles = await createCorrectedSubtitle({ scene, sceneDir, settings: appSettings });
         scene.files.subtitle = subtitleFiles.srtPath;
         scene.files.karaokeAss = subtitleFiles.assPath;
+        if (subtitleFiles.fallback) {
+          await appendProjectLog(paths.projectDir, 'warn', `Subtitle fallback timing used: scene ${scene.sceneNumber}`, { reason: subtitleFiles.reason });
+        }
         await appendProjectLog(paths.projectDir, 'info', `Subtitle done: scene ${scene.sceneNumber}`);
         await saveProject(project);
       }
@@ -341,6 +349,9 @@ async function generateSubtitles(project, appSettings) {
     const subtitleFiles = await createCorrectedSubtitle({ scene, sceneDir, settings: appSettings });
     scene.files.subtitle = subtitleFiles.srtPath;
     scene.files.karaokeAss = subtitleFiles.assPath;
+    if (subtitleFiles.fallback) {
+      await appendProjectLog(paths.projectDir, 'warn', `Subtitle fallback timing used: scene ${scene.sceneNumber}`, { reason: subtitleFiles.reason });
+    }
     await appendProjectLog(paths.projectDir, 'info', `Subtitle done: scene ${scene.sceneNumber}`);
     await saveProject(project);
   }
@@ -362,6 +373,9 @@ async function generateSubtitleForScene(project, appSettings, sceneNumber, force
   const subtitleFiles = await createCorrectedSubtitle({ scene, sceneDir, settings: appSettings });
   scene.files.subtitle = subtitleFiles.srtPath;
   scene.files.karaokeAss = subtitleFiles.assPath;
+  if (subtitleFiles.fallback) {
+    await appendProjectLog(paths.projectDir, 'warn', `Subtitle fallback timing used: scene ${scene.sceneNumber}`, { reason: subtitleFiles.reason });
+  }
   await saveProject(project);
   return scene;
 }
@@ -439,12 +453,37 @@ async function generateThumbnailForProject(project, appSettings, force = false) 
   }
   await appendProjectLog(paths.projectDir, 'info', `Generating thumbnail`, { prompt: project.thumbnailPrompt?.slice(0, 80) });
   const chat01Client = createAiClient(appSettings);
-  await generateThumbnailImage({
-    chat01Client,
-    project,
-    settings: appSettings,
-    outputPath: thumbnailPath
-  });
+  try {
+    await generateThumbnailImage({
+      chat01Client,
+      project,
+      settings: appSettings,
+      outputPath: thumbnailPath
+    });
+  } catch (error) {
+    if (await exists(thumbnailPath)) {
+      project.outputs.thumbnail = thumbnailPath;
+      await saveProject(project);
+      await appendProjectLog(paths.projectDir, 'warn', `Thumbnail generation failed, keeping existing thumbnail: ${error.message}`);
+      return thumbnailPath;
+    }
+
+    const fallbackImage = project.scenes
+      .map((scene) => scene.files?.image)
+      .find(Boolean);
+    if (!fallbackImage || !(await exists(fallbackImage))) {
+      throw error;
+    }
+
+    await fs.mkdir(path.dirname(thumbnailPath), { recursive: true });
+    await fs.copyFile(fallbackImage, thumbnailPath);
+    project.outputs.thumbnail = thumbnailPath;
+    await saveProject(project);
+    await appendProjectLog(paths.projectDir, 'warn', `Thumbnail generation failed, using first scene image as fallback: ${error.message}`, {
+      fallbackImage
+    });
+    return thumbnailPath;
+  }
   project.outputs.thumbnail = thumbnailPath;
   await saveProject(project);
   await appendProjectLog(paths.projectDir, 'info', `Thumbnail done`, { path: thumbnailPath });

@@ -111,6 +111,51 @@ function realignSubtitleText(originalText, autoSrtText) {
   return buildSrt(corrected);
 }
 
+function splitWordsIntoSubtitleLines(text, maxWords = 7, maxChars = 46) {
+  const words = String(text || '').split(/\s+/).filter(Boolean);
+  const lines = [];
+  let current = [];
+
+  for (const word of words) {
+    const next = [...current, word];
+    if (current.length && (next.length > maxWords || next.join(' ').length > maxChars)) {
+      lines.push(current.join(' '));
+      current = [word];
+    } else {
+      current = next;
+    }
+  }
+  if (current.length) lines.push(current.join(' '));
+  return lines;
+}
+
+function buildFallbackSrtFromText(text, durationSec = 1) {
+  const lines = splitWordsIntoSubtitleLines(text);
+  if (!lines.length) {
+    return '';
+  }
+
+  const durationMs = Math.max(1000, Math.round((Number(durationSec) || 1) * 1000));
+  const slotMs = durationMs / lines.length;
+  const blocks = lines.map((line, index) => {
+    const startMs = Math.round(index * slotMs);
+    const endMs = index === lines.length - 1
+      ? durationMs
+      : Math.max(startMs + 300, Math.round((index + 1) * slotMs));
+    return {
+      startMs,
+      endMs,
+      text: line
+    };
+  });
+  return buildSrt(blocks);
+}
+
+function isFasterWhisperUnavailable(error) {
+  const message = String(error?.message || error?.stderr || '');
+  return /No module named faster_whisper|not found|command not found|can't find .*faster_whisper/i.test(message);
+}
+
 function buildKaraokeAssFromSrtText(srtText, aspectRatio = '16:9') {
   const blocks = parseSrtBlocks(srtText);
   const is169 = aspectRatio === '16:9';
@@ -186,20 +231,37 @@ async function writeSubtitleArtifacts(sceneDir, correctedText, aspectRatio = '16
 
 async function createCorrectedSubtitle({ scene, sceneDir, settings }) {
   const autoPath = path.join(sceneDir, 'voice.auto.srt');
+  let fallback = false;
+  let reason = null;
 
   let autoSrtText = '';
   try {
     autoSrtText = await fs.readFile(autoPath, 'utf8');
   } catch {
-    await createSubtitleWithFasterWhisper({
-      audioPath: path.join(sceneDir, 'voice.padded.wav'),
-      outputPath: autoPath
-    });
+    try {
+      await createSubtitleWithFasterWhisper({
+        audioPath: path.join(sceneDir, 'voice.padded.wav'),
+        outputPath: autoPath
+      });
+    } catch (error) {
+      if (!isFasterWhisperUnavailable(error)) {
+        throw error;
+      }
+      const fallbackSrt = buildFallbackSrtFromText(scene.voiceText, scene.durations?.voiceSec);
+      await fs.writeFile(autoPath, fallbackSrt, 'utf8');
+      fallback = true;
+      reason = 'faster_whisper_unavailable';
+    }
     autoSrtText = await fs.readFile(autoPath, 'utf8');
   }
 
   const corrected = realignSubtitleText(scene.voiceText, autoSrtText);
-  return writeSubtitleArtifacts(sceneDir, corrected, settings?.aspectRatio);
+  const artifacts = await writeSubtitleArtifacts(sceneDir, corrected, settings?.aspectRatio);
+  return {
+    ...artifacts,
+    fallback,
+    reason
+  };
 }
 
 async function readSubtitleText(sceneDir) {

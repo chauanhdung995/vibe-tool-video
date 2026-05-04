@@ -1,60 +1,15 @@
-const fs = require('fs/promises');
-const path = require('path');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
-const { downloadFile } = require('./imageService');
-const { VivibeClient } = require('./vivibeClient');
-const { GenmaxClient } = require('./genmaxClient');
-const { VbeeClient } = require('./vbeeClient');
+const { LarVoiceClient } = require('./larvoiceClient');
 
 const execFileAsync = promisify(execFile);
-const { consoleLog } = require('../lib/logger');
-
-async function pollVivibe(vivibeClient, projectExportId, waitMs = 4000, maxAttempts = 120) {
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const result = await vivibeClient.getExportStatus(projectExportId);
-    if (result.state === 'completed') {
-      return result;
-    }
-    if (result.state === 'failed') {
-      throw new Error(`Vivibe job failed: ${projectExportId}`);
-    }
-    if (attempt % 5 === 0) {
-      consoleLog('debug', `Polling voice job`, { attempt, projectExportId, state: result.state });
-    }
-    await new Promise((resolve) => setTimeout(resolve, waitMs));
-  }
-  throw new Error(`Vivibe polling timeout: ${projectExportId}`);
-}
 
 async function createSceneVoice({ scene, settings, sceneDir }) {
-  const provider = settings.ttsProvider || 'vivibe';
-
-  if (provider === 'genmax') {
-    const client = new GenmaxClient(settings);
-    const { voicePath, rawSrtPath } = await client.synthesize(scene.voiceText, sceneDir);
-    return { projectExportId: null, voicePath, rawSrtPath };
-  }
-
-  if (provider === 'vbee') {
-    const client = new VbeeClient(settings);
-    const { voicePath, rawSrtPath } = await client.synthesize(scene.voiceText, sceneDir);
-    return { projectExportId: null, voicePath, rawSrtPath };
-  }
-
-  // Default: vivibe / lucylab
-  const vivibeClient = new VivibeClient(settings);
-  const job = await vivibeClient.createVoice(scene.voiceText, settings.vivibeVoiceId, settings.voiceSpeed);
-  const done = await pollVivibe(vivibeClient, job.projectExportId);
-  const voicePath = path.join(sceneDir, 'voice.wav');
-  await downloadFile(done.url, voicePath);
-
-  const rawSrtPath = done.srtUrl ? path.join(sceneDir, 'voice.auto.srt') : null;
-  if (done.srtUrl) {
-    await downloadFile(done.srtUrl, rawSrtPath);
-  }
+  // Keep the existing pipeline contract while replacing the upstream TTS API.
+  const client = new LarVoiceClient(settings);
+  const { voicePath, rawSrtPath } = await client.synthesize(scene.voiceText, sceneDir);
   return {
-    projectExportId: job.projectExportId,
+    projectExportId: null,
     voicePath,
     rawSrtPath
   };

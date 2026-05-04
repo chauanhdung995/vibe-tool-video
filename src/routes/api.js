@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs/promises');
-const { STYLE_OPTIONS, MOTION_OPTIONS, TMP_DIR } = require('../config/constants');
+const { STYLE_OPTIONS, MOTION_OPTIONS, TMP_DIR, PUBLIC_DIR } = require('../config/constants');
 const { getSettings, saveSettings, readProjectLogs } = require('../services/settingsService');
 const { listHistory, deleteProject, deleteAllProjects } = require('../services/historyService');
 const { getProjectDetails, getProject, saveProject, getProjectPaths, ensureSceneDir } = require('../services/projectService');
@@ -25,6 +25,37 @@ const { parseScriptInput } = require('../services/scriptGenerator');
 
 const upload = multer({ dest: TMP_DIR });
 
+async function readLarVoiceSamples() {
+  const samplesDir = path.join(PUBLIC_DIR, 'voice-samples');
+  const manifestFile = path.join(samplesDir, '_manifest.json');
+  try {
+    const manifest = JSON.parse(await fs.readFile(manifestFile, 'utf8'));
+    const ready = Array.isArray(manifest.ready) ? manifest.ready : [];
+    return ready
+      .filter((voice) => voice?.id && voice?.file)
+      .map((voice) => ({
+        id: Number(voice.id),
+        name: String(voice.name || `Voice ${voice.id}`),
+        language: String(voice.language || ''),
+        duration: Number(voice.duration || 0) || null,
+        sampleUrl: `/voice-samples/${voice.file}`
+      }))
+      .sort((a, b) => a.language.localeCompare(b.language) || a.name.localeCompare(b.name, 'vi'));
+  } catch {
+    const files = await fs.readdir(samplesDir).catch(() => []);
+    return files
+      .map((file) => file.match(/^larvoice-(\d+)-1p00\.mp3$/)?.[1])
+      .filter(Boolean)
+      .map((id) => ({
+        id: Number(id),
+        name: `Voice ${id}`,
+        language: '',
+        duration: null,
+        sampleUrl: `/voice-samples/larvoice-${id}-1p00.mp3`
+      }));
+  }
+}
+
 function createApiRouter() {
   const router = express.Router();
 
@@ -34,8 +65,8 @@ function createApiRouter() {
 
   router.get('/bootstrap', async (req, res, next) => {
     try {
-      const [settings, history] = await Promise.all([getSettings(), listHistory()]);
-      res.json({ settings, history, styles: STYLE_OPTIONS, motionOptions: MOTION_OPTIONS });
+      const [settings, history, voiceSamples] = await Promise.all([getSettings(), listHistory(), readLarVoiceSamples()]);
+      res.json({ settings, history, styles: STYLE_OPTIONS, motionOptions: MOTION_OPTIONS, voiceSamples });
     } catch (error) {
       next(error);
     }

@@ -63,51 +63,52 @@ function parseJsonContent(content) {
 }
 
 function parseKeys(chato1KeysText) {
+  const seen = new Set();
   return String(chato1KeysText || '')
-    .split('\n')
+    .split(/[\s,;]+/g)
     .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function shouldEvictKey(status, responseText) {
-  const text = String(responseText || '').toLowerCase();
-  if (status === 401) {
-    return true;
-  }
-  if (status === 403) {
-    return text.includes('insufficient_credits')
-      || text.includes('insufficient credits')
-      || text.includes('insufficient_quota')
-      || text.includes('quota')
-      || text.includes('invalid_api_key')
-      || text.includes('invalid api key')
-      || text.includes('unauthorized');
-  }
-  return false;
+    .filter(Boolean)
+    .filter((item) => {
+      if (seen.has(item)) {
+        return false;
+      }
+      seen.add(item);
+      return true;
+    });
 }
 
 class Chat01Client {
   constructor(settings) {
     this.keys = parseKeys(settings.chato1KeysText);
     this.index = 0;
-    this.maxKeyRetries = 4;
   }
 
-  getNextKey() {
+  getNextKey(attempted = new Set()) {
     if (!this.keys.length) {
       throw new Error('Missing Chato1 API key');
     }
-    const key = this.keys[this.index % this.keys.length];
-    this.index += 1;
-    return key;
+    const scanCount = this.keys.length;
+    for (let offset = 0; offset < scanCount; offset += 1) {
+      const key = this.keys[this.index % this.keys.length];
+      this.index = (this.index + 1) % this.keys.length;
+      if (!attempted.has(key)) {
+        return key;
+      }
+    }
+    return null;
   }
 
   invalidateKey(key) {
+    const removedIndex = this.keys.indexOf(key);
+    const previousIndex = this.index;
     const nextKeys = this.keys.filter((item) => item !== key);
     this.keys = nextKeys;
     if (!this.keys.length) {
       this.index = 0;
       return;
+    }
+    if (removedIndex >= 0 && removedIndex < previousIndex) {
+      this.index = Math.max(0, previousIndex - 1);
     }
     this.index %= this.keys.length;
   }
@@ -117,40 +118,43 @@ class Chat01Client {
       throw new Error('Missing Chato1 API key');
     }
 
-    const attempts = Math.min(this.maxKeyRetries, this.keys.length);
+    const maxAttempts = this.keys.length;
+    const attempted = new Set();
     let lastError = null;
 
-    for (let attempt = 0; attempt < attempts; attempt += 1) {
-      const key = this.getNextKey();
-      const response = await fetch('https://chat01.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${key}`
-        },
-        body: JSON.stringify(body)
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.choices?.[0]?.message?.content || '';
+    while (this.keys.length && attempted.size < maxAttempts) {
+      const key = this.getNextKey(attempted);
+      if (!key) {
+        break;
       }
+      attempted.add(key);
 
-      const text = await response.text();
-      lastError = new Error(`Chat01 request failed: ${response.status} ${text}`);
+      try {
+        const response = await fetch('https://chat01.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${key}`
+          },
+          body: JSON.stringify(body)
+        });
 
-      if (shouldEvictKey(response.status, text)) {
-        this.invalidateKey(key);
-        if (!this.keys.length) {
-          throw new Error('All Chat01 API keys are invalid or out of credits for this session');
+        if (response.ok) {
+          const data = await response.json();
+          return data.choices?.[0]?.message?.content || '';
         }
-        continue;
-      }
 
-      throw lastError;
+        const text = await response.text().catch(() => '');
+        lastError = new Error(`Chat01 request failed: ${response.status} ${text}`);
+        this.invalidateKey(key);
+      } catch (error) {
+        lastError = error;
+        this.invalidateKey(key);
+      }
     }
 
-    throw lastError || new Error('Chat01 request failed after retrying with multiple keys');
+    const detail = lastError?.message ? ` Last error: ${lastError.message}` : '';
+    throw new Error(`All Chat01 API keys failed for this session.${detail}`);
   }
 
   async generateJson(prompt, model = 'gpt-5-5-thinking') {

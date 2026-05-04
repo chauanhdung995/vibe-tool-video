@@ -1,0 +1,925 @@
+{
+  "startedAt": "2026-05-01T11:52:14.698Z",
+  "updatedAt": "2026-05-01T11:52:43.792Z",
+  "sampleSpeed": 1,
+  "sampleDir": "/Users/ngokhanh/Downloads/video-pipeline-main 2/public/voice-samples",
+  "totalVoices": 129,
+  "generatedThisRun": 8,
+  "skippedThisRun": 121,
+  "failedThisRun": 0,
+  "readyCount": 129,
+  "failedCount": 0,
+  "ready": [
+    {
+      "id": 1,
+      "name": "Anh Quân",
+      "language": "vi",
+      "file": "larvoice-1-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2,
+      "name": "Khải Ân",
+      "language": "vi",
+      "file": "larvoice-2-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 78,
+      "name": "Mạnh Dũng (Pro)",
+      "language": "vi",
+      "file": "larvoice-78-1p00.mp3",
+      "duration": 5.737958,
+      "generatedAt": "2026-05-01T11:52:35.534Z"
+    },
+    {
+      "id": 80,
+      "name": "Minh Anh",
+      "language": "vi",
+      "file": "larvoice-80-1p00.mp3",
+      "duration": 5.537667,
+      "generatedAt": "2026-05-01T11:52:32.815Z"
+    },
+    {
+      "id": 99,
+      "name": "Mai Loan (Pro)",
+      "language": "vi",
+      "file": "larvoice-99-1p00.mp3",
+      "duration": 8.145,
+      "generatedAt": "2026-05-01T11:52:43.792Z"
+    },
+    {
+      "id": 151,
+      "name": "Mạnh Đức  (Pro)",
+      "language": "vi",
+      "file": "larvoice-151-1p00.mp3",
+      "duration": 5.694125,
+      "generatedAt": "2026-05-01T11:52:29.466Z"
+    },
+    {
+      "id": 184,
+      "name": "Ella",
+      "language": "en",
+      "file": "larvoice-184-1p00.mp3",
+      "duration": 7.662,
+      "generatedAt": "2026-05-01T11:52:23.977Z"
+    },
+    {
+      "id": 191,
+      "name": "Thục Trinh (Pro)",
+      "language": "vi",
+      "file": "larvoice-191-1p00.mp3",
+      "duration": 5.105833,
+      "generatedAt": "2026-05-01T11:52:21.199Z"
+    },
+    {
+      "id": 192,
+      "name": "Tuấn Ngọc (Pro)",
+      "language": "vi",
+      "file": "larvoice-192-1p00.mp3",
+      "duration": 5.269083,
+      "generatedAt": "2026-05-01T11:52:18.482Z"
+    },
+    {
+      "id": 193,
+      "name": "Tuấn An (Pro)",
+      "language": "vi",
+      "file": "larvoice-193-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 194,
+      "name": "Anh Tuấn (Pro)",
+      "language": "vi",
+      "file": "larvoice-194-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 474,
+      "name": "Mai Thanh",
+      "language": "vi",
+      "file": "larvoice-474-1p00.mp3",
+      "duration": 5.665958,
+      "generatedAt": "2026-05-01T11:52:38.249Z"
+    },
+    {
+      "id": 477,
+      "name": "Thiên Ân (Pro)",
+      "language": "vi",
+      "file": "larvoice-477-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 795,
+      "name": "Anh Trai",
+      "language": "vi",
+      "file": "larvoice-795-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 826,
+      "name": "Khải Nguyên (Pro)",
+      "language": "vi",
+      "file": "larvoice-826-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 844,
+      "name": "Ánh Kim (Pro)",
+      "language": "vi",
+      "file": "larvoice-844-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 927,
+      "name": "Kỳ Anh (Pro)",
+      "language": "vi",
+      "file": "larvoice-927-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1208,
+      "name": "Đức An (Pro)",
+      "language": "vi",
+      "file": "larvoice-1208-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1209,
+      "name": "Loan Trinh (Pro)",
+      "language": "vi",
+      "file": "larvoice-1209-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1210,
+      "name": "Khởi My (Pro)",
+      "language": "vi",
+      "file": "larvoice-1210-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1234,
+      "name": "Tùng Anh",
+      "language": "vi",
+      "file": "larvoice-1234-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1363,
+      "name": "Ava",
+      "language": "en",
+      "file": "larvoice-1363-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1364,
+      "name": "Mason",
+      "language": "en",
+      "file": "larvoice-1364-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1595,
+      "name": "Uyên Nhi",
+      "language": "vi",
+      "file": "larvoice-1595-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1655,
+      "name": "Phi Sơn (Pro)",
+      "language": "vi",
+      "file": "larvoice-1655-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1656,
+      "name": "Hồng Yến",
+      "language": "vi",
+      "file": "larvoice-1656-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1657,
+      "name": "Thành Đạt (Pro)",
+      "language": "vi",
+      "file": "larvoice-1657-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1658,
+      "name": "Thế Hùng (Pro)",
+      "language": "vi",
+      "file": "larvoice-1658-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1660,
+      "name": "Hưng Thịnh (Pro)",
+      "language": "vi",
+      "file": "larvoice-1660-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1661,
+      "name": "Đức Nhân (Pro)",
+      "language": "vi",
+      "file": "larvoice-1661-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1719,
+      "name": "Diễm Trinh (Pro)",
+      "language": "vi",
+      "file": "larvoice-1719-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1720,
+      "name": "Thúy Loan (Pro)",
+      "language": "vi",
+      "file": "larvoice-1720-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1943,
+      "name": "Mỹ Cẩm (Pro)",
+      "language": "vi",
+      "file": "larvoice-1943-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1944,
+      "name": "Diệp Chi (Pro)",
+      "language": "vi",
+      "file": "larvoice-1944-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1945,
+      "name": "Toàn Thắng (Pro)",
+      "language": "vi",
+      "file": "larvoice-1945-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 1947,
+      "name": "Gia Khiêm (Pro)",
+      "language": "vi",
+      "file": "larvoice-1947-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2073,
+      "name": "Kim Oanh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2073-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2078,
+      "name": "Tuấn Kiệt (Pro)",
+      "language": "vi",
+      "file": "larvoice-2078-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2079,
+      "name": "Ngọc Huyền (Pro)",
+      "language": "vi",
+      "file": "larvoice-2079-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2080,
+      "name": "Cẩm Linh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2080-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2081,
+      "name": "Tường An (Pro)",
+      "language": "vi",
+      "file": "larvoice-2081-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2082,
+      "name": "Trọng Nghĩa (Pro)",
+      "language": "vi",
+      "file": "larvoice-2082-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2083,
+      "name": "Như Mai (Pro)",
+      "language": "vi",
+      "file": "larvoice-2083-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2084,
+      "name": "Sơn Lâm (Pro)",
+      "language": "vi",
+      "file": "larvoice-2084-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2085,
+      "name": "Kiều Minh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2085-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2086,
+      "name": "Duy Minh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2086-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2087,
+      "name": "Nguyệt Minh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2087-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2088,
+      "name": "Tuyết Mai (Pro)",
+      "language": "vi",
+      "file": "larvoice-2088-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2090,
+      "name": "Chí Bảo (Pro)",
+      "language": "vi",
+      "file": "larvoice-2090-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2091,
+      "name": "Anh Tú (Pro)",
+      "language": "vi",
+      "file": "larvoice-2091-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2092,
+      "name": "Đức Nhân (Pro)",
+      "language": "vi",
+      "file": "larvoice-2092-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2093,
+      "name": "Việt Dũng (Pro)",
+      "language": "vi",
+      "file": "larvoice-2093-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2094,
+      "name": "Vân Khánh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2094-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2095,
+      "name": "Mai Khanh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2095-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2096,
+      "name": "Phúc Trọng (Pro)",
+      "language": "vi",
+      "file": "larvoice-2096-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2097,
+      "name": "Chấn Khang (Pro)",
+      "language": "vi",
+      "file": "larvoice-2097-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2098,
+      "name": "Thanh Huyền (Pro)",
+      "language": "vi",
+      "file": "larvoice-2098-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2099,
+      "name": "Hạnh Chi (Pro)",
+      "language": "vi",
+      "file": "larvoice-2099-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2100,
+      "name": "Tiến Sang (Pro)",
+      "language": "vi",
+      "file": "larvoice-2100-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2102,
+      "name": "Trường Phát (Pro)",
+      "language": "vi",
+      "file": "larvoice-2102-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2104,
+      "name": "Phúc Bạch (Pro)",
+      "language": "vi",
+      "file": "larvoice-2104-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2105,
+      "name": "Quang Đăng (Pro)",
+      "language": "vi",
+      "file": "larvoice-2105-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2106,
+      "name": "Thu Cúc (Pro)",
+      "language": "vi",
+      "file": "larvoice-2106-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2107,
+      "name": "Đắc An (Pro)",
+      "language": "vi",
+      "file": "larvoice-2107-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2108,
+      "name": "Toàn Phúc (Pro)",
+      "language": "vi",
+      "file": "larvoice-2108-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2109,
+      "name": "Diệu Ái (Pro)",
+      "language": "vi",
+      "file": "larvoice-2109-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2110,
+      "name": "Quỳnh Anh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2110-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2111,
+      "name": "Trang Nhung (Pro)",
+      "language": "vi",
+      "file": "larvoice-2111-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2112,
+      "name": "Hữu Thiện (Pro)",
+      "language": "vi",
+      "file": "larvoice-2112-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2113,
+      "name": "Mẫn Nhi (Pro)",
+      "language": "vi",
+      "file": "larvoice-2113-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2114,
+      "name": "An Nhiên (Pro)",
+      "language": "vi",
+      "file": "larvoice-2114-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2117,
+      "name": "Tú Anh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2117-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2119,
+      "name": "Ngọc Nga (Pro)",
+      "language": "vi",
+      "file": "larvoice-2119-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2120,
+      "name": "Gia Minh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2120-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2137,
+      "name": "Văn Dũng (Pro)",
+      "language": "vi",
+      "file": "larvoice-2137-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2139,
+      "name": "Thanh Trà (Pro)",
+      "language": "vi",
+      "file": "larvoice-2139-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2141,
+      "name": "Châu Anh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2141-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2153,
+      "name": "Thành Dũng (Pro)",
+      "language": "vi",
+      "file": "larvoice-2153-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2154,
+      "name": "Minh Nguyệt (Pro)",
+      "language": "vi",
+      "file": "larvoice-2154-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2155,
+      "name": "Liêm Hiếu (Pro)",
+      "language": "vi",
+      "file": "larvoice-2155-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2157,
+      "name": "Duy Quang (Pro)",
+      "language": "vi",
+      "file": "larvoice-2157-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2158,
+      "name": "Ánh Dương (Pro)",
+      "language": "vi",
+      "file": "larvoice-2158-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2334,
+      "name": "Phú Quý (Pro)",
+      "language": "vi",
+      "file": "larvoice-2334-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2335,
+      "name": "Trùng Khánh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2335-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2336,
+      "name": "Công Bảo (Pro)",
+      "language": "vi",
+      "file": "larvoice-2336-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2337,
+      "name": "Minh Khánh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2337-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2338,
+      "name": "Thu Phương (Pro)",
+      "language": "vi",
+      "file": "larvoice-2338-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2339,
+      "name": "Ninh Lợi (Pro)",
+      "language": "vi",
+      "file": "larvoice-2339-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2340,
+      "name": "Uy Vũ (Pro)",
+      "language": "vi",
+      "file": "larvoice-2340-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2343,
+      "name": "Dương Phong (Pro)",
+      "language": "vi",
+      "file": "larvoice-2343-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2344,
+      "name": "Công Quang (Pro)",
+      "language": "vi",
+      "file": "larvoice-2344-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2345,
+      "name": "Đinh Nhật (Pro)",
+      "language": "vi",
+      "file": "larvoice-2345-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2347,
+      "name": "Mộc Lan (Pro)",
+      "language": "vi",
+      "file": "larvoice-2347-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2349,
+      "name": "Nguyễn Ánh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2349-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2351,
+      "name": "Anh Duy (Pro)",
+      "language": "vi",
+      "file": "larvoice-2351-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2358,
+      "name": "Đức Phong (Pro)",
+      "language": "vi",
+      "file": "larvoice-2358-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2360,
+      "name": "Đinh Quyết (Pro)",
+      "language": "vi",
+      "file": "larvoice-2360-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2361,
+      "name": "Thắng Sơn (Pro)",
+      "language": "vi",
+      "file": "larvoice-2361-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2362,
+      "name": "Uy Thái (Pro)",
+      "language": "vi",
+      "file": "larvoice-2362-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2363,
+      "name": "Nhã Uyên (Pro)",
+      "language": "vi",
+      "file": "larvoice-2363-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2364,
+      "name": "Thanh Vân (Pro)",
+      "language": "vi",
+      "file": "larvoice-2364-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2365,
+      "name": "Phương Ngọc (Pro)",
+      "language": "vi",
+      "file": "larvoice-2365-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2366,
+      "name": "Tố Như (Pro)",
+      "language": "vi",
+      "file": "larvoice-2366-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2367,
+      "name": "Cát Anh",
+      "language": "vi",
+      "file": "larvoice-2367-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2368,
+      "name": "Phùng Thái (Pro)",
+      "language": "vi",
+      "file": "larvoice-2368-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2369,
+      "name": "Kiếm Trọng (Pro)",
+      "language": "vi",
+      "file": "larvoice-2369-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2370,
+      "name": "Bách Việt (Pro)",
+      "language": "vi",
+      "file": "larvoice-2370-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2371,
+      "name": "Hòa Vinh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2371-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2372,
+      "name": "Linh Chi (Pro)",
+      "language": "vi",
+      "file": "larvoice-2372-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2373,
+      "name": "Bá Vinh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2373-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2374,
+      "name": "Hải Đường (Pro)",
+      "language": "vi",
+      "file": "larvoice-2374-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2375,
+      "name": "Cao Việt (Pro)",
+      "language": "vi",
+      "file": "larvoice-2375-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2376,
+      "name": "Mỹ Yến",
+      "language": "vi",
+      "file": "larvoice-2376-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2377,
+      "name": "Vy Anh",
+      "language": "vi",
+      "file": "larvoice-2377-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2390,
+      "name": "Glina",
+      "language": "en",
+      "file": "larvoice-2390-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2391,
+      "name": "Sam",
+      "language": "en",
+      "file": "larvoice-2391-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2392,
+      "name": "Arnold",
+      "language": "en",
+      "file": "larvoice-2392-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2393,
+      "name": "Jeee",
+      "language": "en",
+      "file": "larvoice-2393-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2423,
+      "name": "Mai Linh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2423-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2424,
+      "name": "Linh Anh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2424-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2425,
+      "name": "Tú Anh(Pro)",
+      "language": "vi",
+      "file": "larvoice-2425-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2426,
+      "name": "Phi Linh (Pro)",
+      "language": "vi",
+      "file": "larvoice-2426-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 2427,
+      "name": "Ái Vân (Pro)",
+      "language": "vi",
+      "file": "larvoice-2427-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 3228,
+      "name": "Phát Tài",
+      "language": "vi",
+      "file": "larvoice-3228-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 3396,
+      "name": "Minh Anh",
+      "language": "vi",
+      "file": "larvoice-3396-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 3397,
+      "name": "Ngọc Huyền",
+      "language": "vi",
+      "file": "larvoice-3397-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 3458,
+      "name": "Quang Minh",
+      "language": "vi",
+      "file": "larvoice-3458-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 3459,
+      "name": "Ngạn Kể",
+      "language": "vi",
+      "file": "larvoice-3459-1p00.mp3",
+      "skipped": true
+    },
+    {
+      "id": 3473,
+      "name": "Adam",
+      "language": "vi",
+      "file": "larvoice-3473-1p00.mp3",
+      "skipped": true
+    }
+  ]
+}

@@ -3,6 +3,7 @@ const path = require('path');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
 const puppeteer = require('puppeteer-core');
+const { buildImageSceneHtml, renderHyperframesComposition } = require('./hyperframesRender');
 
 const execFileAsync = promisify(execFile);
 const SCENE_FPS = 30;
@@ -358,38 +359,36 @@ async function renderSceneVideo({
   const motionPreset = resolveSceneMotionPreset(motionMode, sceneNumber, projectId);
   const sceneDir = path.dirname(outputPath);
   const baseName = path.basename(outputPath, path.extname(outputPath));
-  const framesDir = path.join(sceneDir, `frames_${baseName}`);
-  const rawVideoPath = path.join(sceneDir, `${baseName}.raw.mp4`);
+  const rawVideoPath = subtitlePath ? path.join(sceneDir, `${baseName}.raw.mp4`) : outputPath;
   const processedImagePath = path.join(sceneDir, `${baseName}.prepared.png`);
+  const htmlPath = path.join(sceneDir, `${baseName}.hyperframes.html`);
 
-  await fs.rm(framesDir, { recursive: true, force: true });
   await fs.rm(rawVideoPath, { force: true });
-  await fs.mkdir(framesDir, { recursive: true });
+  if (rawVideoPath !== outputPath) {
+    await fs.rm(outputPath, { force: true });
+  }
 
   try {
     await prepareImageForRender(ffmpegPath, imagePath, processedImagePath, imageStyle);
-    await renderFramesWithBrowser({
+    await fs.writeFile(htmlPath, buildImageSceneHtml({
       imagePath: processedImagePath,
-      framesDir,
       duration,
-      motionPreset
-    });
-    await encodeFramesToVideo({
-      ffmpegPath,
-      framesDir,
-      audioPath,
-      duration,
-      outputPath: rawVideoPath
-    });
-    await burnSubtitleTrack({
-      ffmpegPath,
-      inputPath: rawVideoPath,
-      subtitlePath,
-      outputPath
-    });
+      motionPreset,
+      sceneNumber
+    }), 'utf8');
+    await renderHyperframesComposition(htmlPath, rawVideoPath, duration, null, { voiceAudioPath: audioPath });
+    if (subtitlePath) {
+      await burnSubtitleTrack({
+        ffmpegPath,
+        inputPath: rawVideoPath,
+        subtitlePath,
+        outputPath
+      });
+    }
   } finally {
-    await fs.rm(framesDir, { recursive: true, force: true }).catch(() => {});
-    await fs.rm(rawVideoPath, { force: true }).catch(() => {});
+    if (rawVideoPath !== outputPath) {
+      await fs.rm(rawVideoPath, { force: true }).catch(() => {});
+    }
     await fs.rm(processedImagePath, { force: true }).catch(() => {});
   }
   return outputPath;

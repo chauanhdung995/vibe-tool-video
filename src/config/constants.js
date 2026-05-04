@@ -57,22 +57,10 @@ const DEFAULT_APP_SETTINGS = {
   apiProvider: 'chat01',
   // Chat01.ai
   chato1KeysText: '',
-  // OpenAI
-  openaiKeysText: '',
-  ttsProvider: 'vivibe',
-  // Vivibe / LucyLab
-  vivibeApiKey: '',
-  vivibeVoiceId: '',
-  // Genmax.io
-  genmaxApiKey: '',
-  genmaxVoiceId: '',
-  genmaxSubProvider: 'elevenlabs',
-  genmaxModelId: '',
-  genmaxLanguageCode: 'vi',
-  // Vbee
-  vbeeToken: '',
-  vbeeAppId: '',
-  vbeeVoiceCode: '',
+  ttsProvider: 'larvoice',
+  // LarVoice
+  larvoiceApiKey: '',
+  larvoiceVoiceId: '1',
   aspectRatio: '16:9',
   imageStyle: 'cinematic',
   motionPreset: 'zoom-alternate',
@@ -87,8 +75,8 @@ const DEFAULT_APP_SETTINGS = {
 
 // Chi tiết phong cách nhúng trực tiếp vào imagePrompt khi tạo ảnh
 const STYLE_PROMPT_DETAIL = {
-  'finance-cartoon': 'professional YouTube finance explainer cartoon illustration, pure white background (#FFFFFF), bold clean black outlines, semi-realistic character proportions, flat colors with subtle cel shading, expressive business characters in suits, infographic-friendly composition, no background scenery, no gradients on background, white space dominant, clean editorial cartoon quality similar to financial education YouTube channels',
-  'chalk-dark':      'chalk sketch illustration on dark chalkboard background, deep dark green background (#1a3320), white chalk-like hand-drawn line art, characters have simple rounded oval heads with large dot eyes and minimalist expressive faces, stick-figure-inspired proportions with clothing and detail lines, background elements rendered as thin white outline sketches, monochromatic white-on-dark aesthetic, no flat color fills, sketch marks visible, fable and parable storytelling illustration style, Asian moral tale animation quality',
+  'finance-cartoon': 'professional YouTube finance explainer cartoon illustration, pure white background (#FFFFFF), bold clean black outlines, semi-realistic character proportions, flat colors with subtle cel shading, expressive business characters in suits, symbolic educational composition using people and objects primarily, charts may use 1 to 2 short Vietnamese labels when useful, no English chart text, no dense chart text, no background scenery, no gradients on background, white space dominant, clean editorial cartoon quality similar to financial education YouTube channels',
+  'chalk-dark':      'chalk sketch illustration on dark chalkboard background, deep dark green background (#1a3320), white chalk-like hand-drawn line art with 1 to 2 short Vietnamese chalk phrases when useful, no English writing, no dense writing or formulas, characters have simple rounded oval heads with large dot eyes and minimalist expressive faces, stick-figure-inspired proportions with clothing and detail lines, background elements rendered as thin white outline sketches, monochromatic white-on-dark aesthetic, no flat color fills, sketch marks visible, fable and parable storytelling illustration style, Asian moral tale animation quality',
   'cinematic':       'photorealistic cinematic photography, dramatic movie-grade lighting, 35mm lens look, shallow depth of field, film grain, color graded, high detail movie still quality',
   '2d-explainer':    '2D vector flat illustration, clean crisp lines, bright professional colors, modern explainer video art style, no gradients, simple readable shapes',
   'renaissance':     'Renaissance oil painting, Caravaggio chiaroscuro lighting, dramatic dark background with warm candlelight, classical Italian Old Masters style, rich earthy tones',
@@ -105,7 +93,7 @@ const STYLE_PROMPT_DETAIL = {
 // Modifier đặc biệt cho các style có yêu cầu nền cụ thể — nhúng bổ sung vào prompt
 const STYLE_BG_MODIFIERS = {
   'finance-cartoon': 'pure white background, isolated characters on white, no background scenery',
-  'chalk-dark':      'dark green chalkboard background, white chalk line art only, no color fills on characters'
+  'chalk-dark':      'dark green chalkboard background, white chalk line art only, 1 to 2 short Vietnamese chalk phrases if useful, no English writing, no dense writing, no repeated letters, no formulas, no color fills on characters'
 };
 
 // Framing 16:9 chuẩn — luôn nhúng vào mọi imagePrompt
