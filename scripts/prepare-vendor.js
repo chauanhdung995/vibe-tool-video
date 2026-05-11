@@ -45,6 +45,7 @@ if (existing) {
 console.log(`Downloading Chrome Headless Shell ${CHROME_VERSION}...`);
 const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 const result = spawnSync(npxBin, [
+  '--yes',
   '@puppeteer/browsers',
   'install',
   `chrome-headless-shell@${CHROME_VERSION}`,
