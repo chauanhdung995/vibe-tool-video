@@ -151,9 +151,12 @@ function buildFallbackSrtFromText(text, durationSec = 1) {
   return buildSrt(blocks);
 }
 
-function isFasterWhisperUnavailable(error) {
+function getWhisperFallbackReason(error) {
   const message = String(error?.message || error?.stderr || '');
-  return /No module named faster_whisper|not found|command not found|can't find .*faster_whisper/i.test(message);
+  if (/No module named faster_whisper|not found|command not found|can't find .*faster_whisper/i.test(message)) {
+    return 'faster_whisper_unavailable';
+  }
+  return 'whisper_failed';
 }
 
 function buildKaraokeAssFromSrtText(srtText, aspectRatio = '16:9') {
@@ -244,13 +247,10 @@ async function createCorrectedSubtitle({ scene, sceneDir, settings }) {
         outputPath: autoPath
       });
     } catch (error) {
-      if (!isFasterWhisperUnavailable(error)) {
-        throw error;
-      }
       const fallbackSrt = buildFallbackSrtFromText(scene.voiceText, scene.durations?.voiceSec);
       await fs.writeFile(autoPath, fallbackSrt, 'utf8');
       fallback = true;
-      reason = 'faster_whisper_unavailable';
+      reason = getWhisperFallbackReason(error);
     }
     autoSrtText = await fs.readFile(autoPath, 'utf8');
   }

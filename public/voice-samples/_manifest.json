@@ -2,7 +2,7 @@
   "startedAt": "2026-05-01T11:52:14.698Z",
   "updatedAt": "2026-05-01T11:52:43.792Z",
   "sampleSpeed": 1,
-  "sampleDir": "/Users/ngokhanh/Downloads/video-pipeline-main 2/public/voice-samples",
+  "sampleDir": "public/voice-samples",
   "totalVoices": 129,
   "generatedThisRun": 8,
   "skippedThisRun": 121,
