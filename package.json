@@ -21,6 +21,7 @@
     "puppeteer-core": "^24.42.0"
   },
   "devDependencies": {
+    "@puppeteer/browsers": "^2.13.1",
     "electron": "^42.0.1",
     "electron-builder": "^26.8.1"
   },

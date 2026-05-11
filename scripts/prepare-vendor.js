@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { spawnSync } = require('child_process');
+const { Browser, detectBrowserPlatform, install } = require('@puppeteer/browsers');
 
 const CHROME_VERSION = '131.0.6778.85';
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -42,33 +42,33 @@ if (existing) {
   process.exit(0);
 }
 
-console.log(`Downloading Chrome Headless Shell ${CHROME_VERSION}...`);
-const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-const result = spawnSync(npxBin, [
-  '--yes',
-  '@puppeteer/browsers',
-  'install',
-  `chrome-headless-shell@${CHROME_VERSION}`,
-  '--path',
-  VENDOR_DIR
-], {
-  cwd: ROOT_DIR,
-  stdio: 'inherit',
-  env: process.env
-});
+async function main() {
+  const platform = detectBrowserPlatform();
+  if (!platform) {
+    throw new Error(`Unsupported platform: ${process.platform} ${process.arch}`);
+  }
 
-if (result.status !== 0) {
-  process.exit(result.status || 1);
+  console.log(`Downloading Chrome Headless Shell ${CHROME_VERSION}...`);
+  await install({
+    cacheDir: VENDOR_DIR,
+    browser: Browser.CHROMEHEADLESSSHELL,
+    buildId: CHROME_VERSION,
+    platform
+  });
+
+  const binary = findFirstFile(VENDOR_DIR, BINARY_NAME);
+  if (!binary) {
+    throw new Error('Chrome Headless Shell download completed, but the executable was not found.');
+  }
+
+  try {
+    fs.chmodSync(binary, 0o755);
+  } catch {}
+
+  console.log(`Chrome Headless Shell ready: ${binary}`);
 }
 
-const binary = findFirstFile(VENDOR_DIR, BINARY_NAME);
-if (!binary) {
-  console.error('Chrome Headless Shell download completed, but the executable was not found.');
+main().catch((error) => {
+  console.error(error?.stack || error?.message || String(error));
   process.exit(1);
-}
-
-try {
-  fs.chmodSync(binary, 0o755);
-} catch {}
-
-console.log(`Chrome Headless Shell ready: ${binary}`);
+});
