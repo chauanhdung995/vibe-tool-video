@@ -10,7 +10,7 @@
     "electron": "electron .",
     "prepare:vendor": "node scripts/prepare-vendor.js",
     "dist:mac": "npm run prepare:vendor && electron-builder --mac dmg --arm64",
-    "dist:win": "npm run prepare:vendor && electron-builder --win nsis --x64"
+    "dist:win": "npm run prepare:vendor && electron-builder --win nsis --x64 --publish never"
   },
   "dependencies": {
     "express": "^4.21.2",
