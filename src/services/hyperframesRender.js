@@ -2,11 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const { fileURLToPath, pathToFileURL } = require('url');
-const { ROOT_DIR } = require('../config/constants');
+const { ROOT_DIR, DATA_ROOT_DIR, ASSETS_DIR } = require('../config/constants');
 
 const FPS = 30;
 const LOCAL_BLOCKS_DIR = path.join(__dirname, 'hyperframes', 'blocks');
-const PROJECT_SFX_DIR = path.join(ROOT_DIR, 'assets', 'sfx');
+const PROJECT_SFX_DIR = path.join(ASSETS_DIR, 'sfx');
 const HYPERFRAMES_RENDER_TIMEOUT_MS = Number(process.env.HYPERFRAMES_RENDER_TIMEOUT_MS || 12 * 60 * 1000);
 const HYPERFRAMES_EXIT_GRACE_MS = Number(process.env.HYPERFRAMES_EXIT_GRACE_MS || 5000);
 
@@ -294,12 +294,14 @@ function rewriteProjectAssetPaths(html, compositionDir) {
 function copyLocalFileUrlAsset(fileUrl, compositionDir) {
   try {
     const source = path.resolve(fileURLToPath(fileUrl));
-    const projectRoot = path.resolve(ROOT_DIR);
-    if (source !== projectRoot && !source.startsWith(projectRoot + path.sep)) return '';
+    const allowedRoots = Array.from(new Set([ROOT_DIR, DATA_ROOT_DIR].map((item) => path.resolve(item))));
+    const sourceRoot = allowedRoots.find((root) => source === root || source.startsWith(root + path.sep));
+    if (!sourceRoot) return '';
     if (!fs.existsSync(source) || !fs.statSync(source).isFile()) return '';
 
-    const rel = path.relative(projectRoot, source);
-    const targetRel = path.join('assets', 'local-files', rel);
+    const rel = path.relative(sourceRoot, source);
+    const rootName = sourceRoot === path.resolve(DATA_ROOT_DIR) ? 'data' : 'app';
+    const targetRel = path.join('assets', 'local-files', rootName, rel);
     const target = path.join(compositionDir, targetRel);
     fs.mkdirSync(path.dirname(target), { recursive: true });
     fs.copyFileSync(source, target);
@@ -330,8 +332,8 @@ function injectVoiceAudio(html, voiceSrc, durationSec) {
 
 function runHyperframesRender({ compositionDir, outputVideo, onLog }) {
   return new Promise((resolve, reject) => {
+    const cliPath = getHyperframesCliPath();
     const args = [
-      'hyperframes',
       'render',
       compositionDir,
       '--output',
@@ -345,10 +347,10 @@ function runHyperframesRender({ compositionDir, outputVideo, onLog }) {
       '--strict'
     ];
 
-    const proc = spawn('npx', args, {
+    const proc = spawn(process.execPath, [cliPath, ...args], {
       cwd: ROOT_DIR,
       stdio: ['ignore', 'pipe', 'pipe'],
-      env: process.env,
+      env: getHyperframesEnv(),
       detached: true
     });
 
@@ -427,6 +429,28 @@ function runHyperframesRender({ compositionDir, outputVideo, onLog }) {
       fail(new Error(`hyperframes render failed (${code}): ${detail}`));
     });
   });
+}
+
+function getHyperframesCliPath() {
+  return path.join(path.dirname(require.resolve('hyperframes/package.json')), 'dist', 'cli.js');
+}
+
+function getHyperframesEnv() {
+  const env = { ...process.env };
+  if (process.versions.electron) {
+    env.ELECTRON_RUN_AS_NODE = '1';
+  }
+
+  const toolDirs = [
+    env.VIBE_TOOL_FFMPEG_PATH && path.dirname(env.VIBE_TOOL_FFMPEG_PATH),
+    env.VIBE_TOOL_FFPROBE_PATH && path.dirname(env.VIBE_TOOL_FFPROBE_PATH)
+  ].filter(Boolean);
+
+  if (toolDirs.length) {
+    env.PATH = [...toolDirs, env.PATH || ''].join(path.delimiter);
+  }
+
+  return env;
 }
 
 function isHyperframesCompletedLine(line) {

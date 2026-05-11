@@ -1,10 +1,14 @@
 const path = require('path');
 
 const ROOT_DIR = path.resolve(__dirname, '../..');
-const STORAGE_DIR = path.join(ROOT_DIR, 'storage');
-const PROJECTS_DIR = path.join(ROOT_DIR, 'projects');
-const TMP_DIR = path.join(ROOT_DIR, 'tmp');
+const DATA_ROOT_DIR = process.env.VIBE_TOOL_DATA_DIR
+  ? path.resolve(process.env.VIBE_TOOL_DATA_DIR)
+  : ROOT_DIR;
+const STORAGE_DIR = path.join(DATA_ROOT_DIR, 'storage');
+const PROJECTS_DIR = path.join(DATA_ROOT_DIR, 'projects');
+const TMP_DIR = path.join(DATA_ROOT_DIR, 'tmp');
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
+const ASSETS_DIR = path.join(ROOT_DIR, 'assets');
 const SETTINGS_FILE = path.join(STORAGE_DIR, 'settings.json');
 const HISTORY_FILE = path.join(STORAGE_DIR, 'history.json');
 
@@ -69,8 +73,8 @@ const DEFAULT_APP_SETTINGS = {
   logoPath: '',
   referenceImageUrl: '',
   musicVolume: 0.18,
-  ffmpegPath: 'ffmpeg',
-  ffprobePath: 'ffprobe'
+  ffmpegPath: process.env.VIBE_TOOL_FFMPEG_PATH || 'ffmpeg',
+  ffprobePath: process.env.VIBE_TOOL_FFPROBE_PATH || 'ffprobe'
 };
 
 // Chi tiết phong cách nhúng trực tiếp vào imagePrompt khi tạo ảnh
@@ -101,10 +105,12 @@ const STYLE_FRAMING_CUE = '16:9 landscape composition, cinematic wide framing, s
 
 module.exports = {
   ROOT_DIR,
+  DATA_ROOT_DIR,
   STORAGE_DIR,
   PROJECTS_DIR,
   TMP_DIR,
   PUBLIC_DIR,
+  ASSETS_DIR,
   SETTINGS_FILE,
   HISTORY_FILE,
   STYLE_OPTIONS,

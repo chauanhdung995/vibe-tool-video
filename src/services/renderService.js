@@ -9,6 +9,7 @@ const execFileAsync = promisify(execFile);
 const SCENE_FPS = 30;
 const CHROME_CANDIDATES = [
   process.env.CHROME_PATH,
+  process.env.HYPERFRAMES_BROWSER_PATH,
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   '/Applications/Chromium.app/Contents/MacOS/Chromium'
 ].filter(Boolean);

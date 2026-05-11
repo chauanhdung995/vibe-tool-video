@@ -18,7 +18,7 @@ async function ensureAppDirectories() {
 
   const settings = await readJson(SETTINGS_FILE, null);
   if (!settings) {
-    await writeJson(SETTINGS_FILE, DEFAULT_APP_SETTINGS);
+    await writeJson(SETTINGS_FILE, sanitizeSettings(DEFAULT_APP_SETTINGS));
   }
 
   const history = await readJson(HISTORY_FILE, null);
@@ -44,6 +44,13 @@ function sanitizeSettings(input) {
   const merged = { ...DEFAULT_APP_SETTINGS, ...(input || {}) };
   const allowed = Object.keys(DEFAULT_APP_SETTINGS);
   const next = Object.fromEntries(allowed.map((key) => [key, merged[key]]));
+  const forceBundledTools = process.env.VIBE_TOOL_FORCE_BUNDLED_TOOLS === '1';
+  if (process.env.VIBE_TOOL_FFMPEG_PATH && (forceBundledTools || !input?.ffmpegPath || input.ffmpegPath === 'ffmpeg')) {
+    next.ffmpegPath = process.env.VIBE_TOOL_FFMPEG_PATH;
+  }
+  if (process.env.VIBE_TOOL_FFPROBE_PATH && (forceBundledTools || !input?.ffprobePath || input.ffprobePath === 'ffprobe')) {
+    next.ffprobePath = process.env.VIBE_TOOL_FFPROBE_PATH;
+  }
   next.apiProvider = 'chat01';
   next.ttsProvider = 'larvoice';
   next.larvoiceVoiceId = String(next.larvoiceVoiceId || '1');
